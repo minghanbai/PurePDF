@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>關於我們 & 隱私權政策 - PurePDF</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-lg group-hover:bg-blue-700 transition">P</div>
+                <span class="text-xl font-bold text-gray-800 tracking-tight">PurePDF</span>
+            </a>
+            <div class="flex gap-4 text-sm font-medium text-gray-600">
+                <a href="pdf_reorder.html" class="hover:text-blue-600 transition">合併重組</a>
+                <a href="pdf_to_jpg.html" class="hover:text-blue-600 transition">PDF 轉 JPG</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow py-12 px-4">
+        <div class="max-w-4xl mx-auto space-y-12">
+            
+            <!-- About Section -->
+            <section class="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-gray-200">
+                <h1 class="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                    <i class="fa-solid fa-circle-info text-blue-600"></i> 關於 PurePDF
+                </h1>
+                <div class="space-y-4 text-gray-600 leading-relaxed">
+                    <p>
+                        PurePDF 是一個致力於提供<strong>安全、快速、隱私優先</strong>的線上 PDF 工具平台。
+                    </p>
+                    <p>
+                        在數位化時代，我們經常需要處理含有個人隱私或商業機密的文件。市面上許多的線上 PDF 工具雖然方便，但往往需要將您的檔案上傳至遠端伺服器進行處理。這不僅受限於網路速度，更存在著資料外洩的潛在風險。
+                    </p>
+                    <p>
+                        PurePDF 的誕生正是為了解決這個問題。我們利用現代瀏覽器強大的運算能力（WebAssembly 與 JavaScript），將原本需要伺服器處理的工作，全部移至您的<strong>本地端瀏覽器</strong>完成。
+                    </p>
+                </div>
+            </section>
+
+            <!-- Privacy Policy -->
+            <section class="bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                    <i class="fa-solid fa-shield-halved text-green-600"></i> 隱私權政策
+                </h2>
+                
+                <div class="space-y-6 text-gray-600">
+                    <div class="bg-green-50 border border-green-100 p-4 rounded-lg">
+                        <h3 class="font-bold text-green-800 mb-2">核心承諾：檔案不離手</h3>
+                        <p class="text-sm">
+                            當您使用 PurePDF 時，您選擇的檔案<strong>永遠不會離開您的裝置</strong>。所有的運算過程（讀取、重組、轉檔）皆是在您的電腦或手機記憶體中進行。我們沒有後端資料庫，也不會儲存您的任何文件副本。
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-gray-800 mb-2">1. 資料收集</h3>
+                        <p>我們<strong>不收集</strong>使用者的文件內容、檔名或任何個人識別資料。本網站託管於 GitHub Pages，可能會由 GitHub 收集標準的伺服器存取日誌（如 IP 位址），這屬於 GitHub 的服務條款範疇。</p>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-gray-800 mb-2">2. Cookie 與追蹤</h3>
+                        <p>PurePDF 本身不使用 Cookie 來追蹤您的個人行為。我們僅可能使用本地儲存（Local Storage）來暫存您的操作偏好（如選擇的解析度設定），這些資料僅存於您的瀏覽器中。</p>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-gray-800 mb-2">3. 外部連結</h3>
+                        <p>本網站可能包含通往其他網站（如作者個人網站或 GitHub 儲存庫）的連結。我們無法控制這些外部網站的隱私權實務。</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tech Stack & Credits -->
+            <section class="bg-slate-50 p-8 md:p-10 rounded-2xl border border-slate-200">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">技術與開源致謝</h2>
+                <p class="text-gray-600 mb-4 text-sm">
+                    PurePDF 是建立在巨人的肩膀上。我們使用了以下優秀的開源專案來實現純前端處理：
+                </p>
+                <ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <li class="flex items-center gap-2 text-sm text-gray-700 bg-white p-3 rounded border border-gray-200">
+                        <i class="fa-brands fa-js text-yellow-500"></i>
+                        <strong>PDF.js (Mozilla)</strong> - 用於渲染 PDF 預覽
+                    </li>
+                    <li class="flex items-center gap-2 text-sm text-gray-700 bg-white p-3 rounded border border-gray-200">
+                        <i class="fa-solid fa-file-code text-blue-500"></i>
+                        <strong>pdf-lib</strong> - 用於修改與建立 PDF 結構
+                    </li>
+                    <li class="flex items-center gap-2 text-sm text-gray-700 bg-white p-3 rounded border border-gray-200">
+                        <i class="fa-brands fa-react text-blue-400"></i>
+                        <strong>React</strong> - 用於建構互動介面
+                    </li>
+                    <li class="flex items-center gap-2 text-sm text-gray-700 bg-white p-3 rounded border border-gray-200">
+                        <i class="fa-solid fa-css3-alt text-teal-500"></i>
+                        <strong>Tailwind CSS</strong> - 用於介面樣式設計
+                    </li>
+                </ul>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-100 border-t border-gray-200 py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="flex items-center justify-center gap-2 mb-4 text-gray-400 text-sm">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Secure Client-Side Processing</span>
+            </div>
+            
+            <div class="flex justify-center gap-6 mb-4 text-sm text-gray-600">
+                <a href="index.html" class="hover:text-blue-600 transition">首頁</a>
+                <a href="about.html" class="text-blue-600 font-medium">關於我們 & 隱私權</a>
+            </div>
+
+            <p class="text-gray-500 text-sm">
+                &copy; 2024 PurePDF. Created by <a href="https://minghanbai.github.io/" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline font-medium transition">minghanbai</a>.
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>
