@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 轉 JPG 轉換工具 - PurePDF</title>
+    
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Unified Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-lg group-hover:bg-blue-700 transition">P</div>
+                <span class="text-xl font-bold text-gray-800 tracking-tight">PurePDF</span>
+            </a>
+            <div class="flex gap-4 text-sm font-medium text-gray-600">
+                <a href="pdf_reorder.html" class="hover:text-blue-600 transition">合併重組</a>
+                <a href="pdf_to_jpg.html" class="text-blue-600">PDF 轉 JPG</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content (React Root) -->
+    <main class="flex-grow">
+        <div id="root"></div>
+    </main>
+
+    <!-- Unified Footer -->
+    <footer class="bg-gray-100 border-t border-gray-200 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="flex items-center justify-center gap-2 mb-2 text-gray-400 text-sm">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Secure Client-Side Processing</span>
+            </div>
+            <p class="text-gray-500 text-sm">
+                &copy; 2024 PurePDF. All rights reserved. 
+            </p>
+        </div>
+    </footer>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect, useMemo } = React;
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js';
+
+        const PAPER_SIZES = { 'A5': { width: 5.83, height: 8.27 }, 'A4': { width: 8.27, height: 11.69 }, 'A3': { width: 11.69, height: 16.53 }, 'Letter': { width: 8.5, height: 11.0 }, 'Legal': { width: 8.5, height: 14.0 } };
+        const DPI_OPTIONS = [ { value: 72, label: '72 DPI (螢幕瀏覽)' }, { value: 150, label: '150 DPI (電子書/普通列印)' }, { value: 300, label: '300 DPI (高品質列印)' } ];
+
+        const IconUpload = () => <i className="fa-solid fa-cloud-arrow-up text-2xl"></i>;
+        const IconImage = () => <i className="fa-regular fa-image"></i>;
+        const IconSettings = () => <i className="fa-solid fa-sliders"></i>;
+        const IconDownload = () => <i className="fa-solid fa-download"></i>;
+        const IconCheck = () => <i className="fa-solid fa-check"></i>;
+        const IconAlert = () => <i className="fa-solid fa-triangle-exclamation"></i>;
+        const IconPdf = () => <i className="fa-regular fa-file-pdf"></i>;
+
+        function App() {
+            const [file, setFile] = useState(null);
+            const [pdfDoc, setPdfDoc] = useState(null);
+            const [totalPages, setTotalPages] = useState(0);
+            
+            const [pageMode, setPageMode] = useState('all');
+            const [rangeInput, setRangeInput] = useState('');
+            const [dimensionMode, setDimensionMode] = useState('paper');
+            const [maxWidth, setMaxWidth] = useState(1920);
+            const [baseScale, setBaseScale] = useState(2.0);
+            const [selectedPaper, setSelectedPaper] = useState('A4');
+            const [selectedDPI, setSelectedDPI] = useState(150);
+            const [imgQuality, setImgQuality] = useState(0.85);
+
+            const [isProcessing, setIsProcessing] = useState(false);
+            const [progress, setProgress] = useState({ current: 0, total: 0, message: '' });
+            const [error, setError] = useState(null);
+            const [result, setResult] = useState(null);
+
+            const fileInputRef = useRef(null);
+
+            const handleFileChange = async (e) => {
+                const selectedFile = e.target.files[0];
+                if (!selectedFile) return;
+                if (selectedFile.type !== 'application/pdf') { setError('請上傳 PDF 格式的檔案'); return; }
+
+                setFile(selectedFile); setError(null); setResult(null); setIsProcessing(true);
+                setProgress({ current: 0, total: 0, message: '分析檔案中...' });
+
+                try {
+                    const arrayBuffer = await selectedFile.arrayBuffer();
+                    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                    const doc = await loadingTask.promise;
+                    setPdfDoc(doc); setTotalPages(doc.numPages); setIsProcessing(false);
+                } catch (err) {
+                    console.error(err); setError('無法讀取 PDF 檔案，檔案可能已損壞。'); setIsProcessing(false);
+                }
+            };
+
+            const parsePageRange = (total) => {
+                if (pageMode === 'all') return Array.from({ length: total }, (_, i) => i + 1);
+                const pages = new Set();
+                const parts = rangeInput.split(/[,;]/);
+                parts.forEach(part => {
+                    const p = part.trim(); if (!p) return;
+                    if (p.includes('-')) {
+                        const [start, end] = p.split('-').map(num => parseInt(num, 10));
+                        if (!isNaN(start) && !isNaN(end)) {
+                            const min = Math.max(1, Math.min(start, end)); const max = Math.min(total, Math.max(start, end));
+                            for (let i = min; i <= max; i++) pages.add(i);
+                        }
+                    } else {
+                        const num = parseInt(p, 10); if (!isNaN(num) && num >= 1 && num <= total) pages.add(num);
+                    }
+                });
+                return Array.from(pages).sort((a, b) => a - b);
+            };
+
+            const getPaperDimensionsText = () => {
+                const paper = PAPER_SIZES[selectedPaper];
+                const longEdgePx = Math.round(paper.height * selectedDPI);
+                const shortEdgePx = Math.round(paper.width * selectedDPI);
+                return `${selectedPaper} @ ${selectedDPI} DPI (約 ${shortEdgePx} x ${longEdgePx} px)`;
+            };
+
+            const startConversion = async () => {
+                if (!pdfDoc) return;
+                setResult(null); setError(null); setIsProcessing(true);
+                const targetPages = parsePageRange(totalPages);
+                if (targetPages.length === 0) { setError('請選擇有效的頁數範圍'); setIsProcessing(false); return; }
+
+                try {
+                    let zip = null;
+                    if (targetPages.length > 1) zip = new JSZip();
+
+                    for (let i = 0; i < targetPages.length; i++) {
+                        const pageNum = targetPages[i];
+                        setProgress({ current: i + 1, total: targetPages.length, message: `正在處理第 ${pageNum} 頁...` });
+                        const page = await pdfDoc.getPage(pageNum);
+                        const defaultViewport = page.getViewport({ scale: 1.0 });
+                        let renderScale = 1.0;
+
+                        if (dimensionMode === 'pixel') {
+                            renderScale = baseScale;
+                            const testWidth = defaultViewport.width * baseScale; const testHeight = defaultViewport.height * baseScale;
+                            if (maxWidth && (testWidth > maxWidth || testHeight > maxWidth)) {
+                                const scaleW = maxWidth / defaultViewport.width; const scaleH = maxWidth / defaultViewport.height; renderScale = Math.min(scaleW, scaleH);
+                            }
+                        } else {
+                            const paper = PAPER_SIZES[selectedPaper];
+                            const paperLongEdgeInches = Math.max(paper.width, paper.height);
+                            const targetLongEdgePx = paperLongEdgeInches * selectedDPI;
+                            const pdfLongEdge = Math.max(defaultViewport.width, defaultViewport.height);
+                            renderScale = targetLongEdgePx / pdfLongEdge;
+                        }
+
+                        const viewport = page.getViewport({ scale: renderScale });
+                        const canvas = document.createElement('canvas'); const context = canvas.getContext('2d');
+                        canvas.width = viewport.width; canvas.height = viewport.height;
+                        await page.render({ canvasContext: context, viewport: viewport }).promise;
+                        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', imgQuality));
+                        const fileName = `${file.name.replace('.pdf', '')}_p${String(pageNum).padStart(3, '0')}.jpg`;
+
+                        if (targetPages.length === 1) {
+                            const url = URL.createObjectURL(blob); setResult({ type: 'single', url, filename: fileName });
+                        } else {
+                            zip.file(fileName, blob);
+                        }
+                    }
+
+                    if (targetPages.length > 1) {
+                        setProgress({ current: targetPages.length, total: targetPages.length, message: '正在打包壓縮檔...' });
+                        const content = await zip.generateAsync({ type: 'blob' });
+                        const url = URL.createObjectURL(content);
+                        const zipName = `${file.name.replace('.pdf', '')}_images.zip`;
+                        setResult({ type: 'zip', url, filename: zipName });
+                    }
+                } catch (err) {
+                    console.error(err); setError('轉換過程中發生錯誤: ' + err.message);
+                } finally { setIsProcessing(false); }
+            };
+
+            return (
+                <div className="flex flex-col items-center py-10 px-4">
+                    <div className="w-full max-w-3xl bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                        
+                        {/* Tool Header (Inner) */}
+                        <div className="bg-white border-b border-gray-100 p-6">
+                            <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-800">
+                                <span className="text-blue-600"><IconImage /></span>
+                                PDF 轉 JPG 工具
+                            </h1>
+                            <p className="text-gray-500 text-sm mt-1">
+                                本地端運算・自動調整尺寸・批次打包
+                            </p>
+                        </div>
+
+                        <div className="p-8">
+                            {!file ? (
+                                <div onClick={() => fileInputRef.current.click()} className="border-2 border-dashed border-slate-300 rounded-xl p-12 flex flex-col items-center justify-center text-slate-500 hover:bg-blue-50 hover:border-blue-400 transition-colors cursor-pointer">
+                                    <input type="file" accept="application/pdf" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
+                                    <div className="bg-blue-100 p-4 rounded-full mb-4 text-blue-600"><IconUpload /></div>
+                                    <p className="text-lg font-medium text-slate-700">點擊選擇 PDF 檔案</p>
+                                    <p className="text-sm mt-2">支援拖放，檔案不會上傳至伺服器</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-8 animate-fade-in">
+                                    <div className="flex items-center justify-between bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-red-100 text-red-600 p-2 rounded text-xl w-10 h-10 flex items-center justify-center"><IconPdf /></div>
+                                            <div>
+                                                <h3 className="font-bold text-slate-700">{file.name}</h3>
+                                                <p className="text-sm text-slate-500">共 {totalPages} 頁 / {(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => { setFile(null); setPdfDoc(null); setResult(null); }} className="text-sm text-red-500 hover:text-red-700 font-medium">移除檔案</button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="bg-white border border-slate-200 p-5 rounded-xl shadow-sm">
+                                            <div className="flex items-center gap-2 mb-4 text-slate-700 font-bold"><IconSettings /> 頁面選擇</div>
+                                            <div className="space-y-3">
+                                                <label className="flex items-center gap-3 cursor-pointer">
+                                                    <input type="radio" name="pageMode" checked={pageMode === 'all'} onChange={() => setPageMode('all')} className="w-4 h-4 text-blue-600" />
+                                                    <span className="text-slate-700">全部頁面</span>
+                                                </label>
+                                                <label className="flex items-center gap-3 cursor-pointer">
+                                                    <input type="radio" name="pageMode" checked={pageMode === 'range'} onChange={() => setPageMode('range')} className="w-4 h-4 text-blue-600" />
+                                                    <span className="text-slate-700">自訂範圍</span>
+                                                </label>
+                                                {pageMode === 'range' && (
+                                                    <input type="text" placeholder="例如: 1, 3-5, 8" value={rangeInput} onChange={(e) => setRangeInput(e.target.value)} className="w-full mt-2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                                )}
+                                                <p className="text-xs text-slate-400">目前將輸出: {parsePageRange(totalPages).length} 頁</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-white border border-slate-200 p-5 rounded-xl shadow-sm">
+                                            <div className="flex items-center gap-2 mb-4 text-slate-700 font-bold"><IconSettings /> 影像設定</div>
+                                            <div className="mb-4">
+                                                <div className="flex bg-slate-100 rounded-lg p-1 mb-4">
+                                                    <button onClick={() => setDimensionMode('paper')} className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${dimensionMode === 'paper' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>標準紙張</button>
+                                                    <button onClick={() => setDimensionMode('pixel')} className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-all ${dimensionMode === 'pixel' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>自訂像素</button>
+                                                </div>
+                                                {dimensionMode === 'pixel' ? (
+                                                    <div className="space-y-4 animate-fade-in">
+                                                        <div><label className="block text-sm font-medium text-slate-600 mb-1">最大邊長限制 (px)</label><input type="number" value={maxWidth} onChange={(e) => setMaxWidth(Number(e.target.value))} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm" /></div>
+                                                        <div><label className="block text-sm font-medium text-slate-600 mb-1">基礎解析度倍率: {baseScale}x</label><input type="range" min="1" max="4" step="0.5" value={baseScale} onChange={(e) => setBaseScale(Number(e.target.value))} className="w-full accent-blue-600" /></div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-4 animate-fade-in">
+                                                        <div><label className="block text-sm font-medium text-slate-600 mb-1">目標紙張</label><select value={selectedPaper} onChange={(e) => setSelectedPaper(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white">{Object.keys(PAPER_SIZES).map(size => (<option key={size} value={size}>{size}</option>))}</select></div>
+                                                        <div><label className="block text-sm font-medium text-slate-600 mb-1">解析度 (DPI)</label><select value={selectedDPI} onChange={(e) => setSelectedDPI(Number(e.target.value))} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white">{DPI_OPTIONS.map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}</select></div>
+                                                        <div className="bg-blue-50 text-blue-700 text-xs p-3 rounded-lg"><strong>預估:</strong> {getPaperDimensionsText()}</div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col items-center justify-center pt-4">
+                                        {error && <div className="mb-4 text-red-600 bg-red-50 px-4 py-2 rounded-lg flex items-center gap-2"><IconAlert /> {error}</div>}
+                                        {!result ? (
+                                            <button onClick={startConversion} disabled={isProcessing} className={`px-8 py-3 rounded-lg text-white font-semibold shadow-lg flex items-center gap-2 transition-all ${isProcessing ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 hover:scale-105'}`}>
+                                                {isProcessing ? <><div className="loader"></div><span>{progress.message} ({Math.round((progress.current / progress.total) * 100) || 0}%)</span></> : <><IconCheck /> 開始轉換</>}
+                                            </button>
+                                        ) : (
+                                            <div className="w-full bg-green-50 border border-green-200 rounded-xl p-6 flex flex-col items-center animate-fade-in">
+                                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4 text-2xl"><IconCheck /></div>
+                                                <h3 className="text-xl font-bold text-green-800 mb-1">轉換完成！</h3>
+                                                <div className="flex gap-4 mt-6">
+                                                    <a href={result.url} download={result.filename} className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium shadow-md flex items-center gap-2"><IconDownload /> 下載檔案</a>
+                                                    <button onClick={() => setResult(null)} className="px-6 py-3 bg-white border border-green-200 text-green-700 hover:bg-green-50 rounded-lg font-medium">繼續轉換</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
