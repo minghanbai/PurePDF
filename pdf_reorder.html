@@ -16,6 +16,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 
+    <!-- 引入共用佈局腳本 -->
+    <script src="layout.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -57,19 +60,7 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- Unified Navigation -->
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <a href="index.html" class="flex items-center gap-2 group">
-                <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-lg group-hover:bg-blue-700 transition">P</div>
-                <span class="text-xl font-bold text-gray-800 tracking-tight">PurePDF</span>
-            </a>
-            <div class="flex gap-4 text-sm font-medium text-gray-600">
-                <a href="pdf_reorder.html" class="text-blue-600">合併重組</a>
-                <a href="pdf_to_jpg.html" class="hover:text-blue-600 transition">PDF 轉 JPG</a>
-            </div>
-        </div>
-    </nav>
+    <!-- Header will be injected here by layout.js -->
 
     <!-- Main Content -->
     <main class="flex-grow p-4 md:p-8 flex flex-col items-center">
@@ -85,7 +76,7 @@
                         PDF 合併重組
                     </h1>
                     
-                    <!-- View Mode Tabs (Moved here) -->
+                    <!-- View Mode Tabs -->
                     <div class="flex rounded-lg shadow-sm" role="group">
                         <button id="tabFiles" class="tab-btn px-3 py-1.5 md:px-4 text-sm font-medium rounded-l-lg hover:bg-gray-50 transition">
                             <i class="fa-solid fa-list mr-1"></i> 檔案
@@ -183,18 +174,7 @@
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-gray-100 border-t border-gray-200 py-6 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <div class="flex items-center justify-center gap-2 mb-2 text-gray-400 text-sm">
-                <i class="fa-solid fa-shield-halved"></i>
-                <span>Secure Client-Side Processing</span>
-            </div>
-            <p class="text-gray-500 text-sm">
-                &copy; 2024 PurePDF. All rights reserved. 
-            </p>
-        </div>
-    </footer>
+    <!-- Footer will be injected here by layout.js -->
 
     <!-- Templates & Scripts -->
     <template id="fileItemTemplate">
@@ -215,7 +195,7 @@
         </div>
     </template>
 
-    <!-- Page Card Template (Updated for visibility) -->
+    <!-- Page Card Template -->
     <template id="pageCardTemplate">
         <div class="pdf-page-card bg-white rounded-lg shadow-sm border border-gray-200 relative group flex flex-row md:flex-col items-center md:items-stretch p-2 md:p-3 gap-3 md:gap-0 h-24 md:h-auto hover:shadow-md transition-shadow" data-unique-id="">
             <!-- Drag Handle (Top Right) -->
@@ -224,7 +204,7 @@
                 <i class="fa-solid fa-grip-vertical hidden md:block"></i>
             </div>
             
-            <!-- Header Row: Checkbox & Badge (Moved to justify-start to avoid overlap) -->
+            <!-- Header Row: Checkbox & Badge -->
             <div class="flex-shrink-0 md:flex md:justify-start md:items-center md:gap-2 md:mb-2 md:pb-2 md:border-b md:border-gray-100 order-last md:order-first flex flex-col md:flex-row items-end md:items-center">
                 <label class="flex items-center cursor-pointer select-none p-1">
                     <input type="checkbox" class="include-checkbox form-checkbox h-5 w-5 md:h-4 md:w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" checked>
