@@ -3,22 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-site-verification" content="LHtbCLTNDCIrsjcAhPsybQNS168foylnoH8ZLEdXalE" />
     <title>PurePDF - 免費、安全、純前端的 PDF 工具箱</title>
-    <!-- 新增：SEO 與信任度相關 Meta -->
-    <meta name="description" content="PurePDF 是一個純前端運行的免費 PDF 工具網站。支援 PDF 合併、重組與轉檔 JPG。所有檔案皆在您的瀏覽器內處理，絕不上傳至伺服器，確保 100% 隱私安全。">
-    <meta name="keywords" content="PDF tool, PDF merge, PDF to JPG, client-side, privacy, secure, open source">
-    <meta name="author" content="PurePDF">
-    <meta name="robots" content="index, follow">
-    
-    <!-- Open Graph (讓分享連結好看一點) -->
-    <meta property="og:title" content="PurePDF - 安全的純前端 PDF 工具">
-    <meta property="og:description" content="檔案不離手，隱私零風險。完全在瀏覽器端處理您的 PDF 文件。">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://minghanbai.github.io/PurePDF/">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入共用佈局腳本 -->
+    <script src="layout.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
@@ -27,19 +16,7 @@
 </head>
 <body class="flex flex-col min-h-screen">
 
-    <!-- Navigation -->
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <a href="index.html" class="flex items-center gap-2 group">
-                <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-lg group-hover:bg-blue-700 transition">P</div>
-                <span class="text-xl font-bold text-gray-800 tracking-tight">PurePDF</span>
-            </a>
-            <div class="flex gap-4 text-sm font-medium text-gray-600">
-                <a href="pdf_reorder.html" class="hover:text-blue-600 transition">合併重組</a>
-                <a href="pdf_to_jpg.html" class="hover:text-blue-600 transition">PDF 轉 JPG</a>
-            </div>
-        </div>
-    </nav>
+    <!-- Header will be injected here by layout.js -->
 
     <!-- Hero Section -->
     <header class="bg-white border-b border-gray-100 py-16 md:py-24">
@@ -54,8 +31,8 @@
                 <a href="#tools" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-200">
                     開始使用
                 </a>
-                <a href="https://github.com/minghanbai/PurePDF/" target="_blank" class="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition">
-                    <i class="fa-brands fa-github mr-2"></i> GitHub
+                <a href="https://minghanbai.github.io/" target="_blank" class="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition">
+                    <i class="fa-solid fa-user mr-2"></i> 作者網站
                 </a>
             </div>
         </div>
@@ -103,18 +80,7 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-gray-100 border-t border-gray-200 py-8 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <div class="flex items-center justify-center gap-2 mb-4 text-gray-400 text-sm">
-                <i class="fa-solid fa-shield-halved"></i>
-                <span>Secure Client-Side Processing</span>
-            </div>
-            <p class="text-gray-500 text-sm">
-                &copy; 2024 PurePDF. All rights reserved. 
-            </p>
-        </div>
-    </footer>
+    <!-- Footer will be injected here by layout.js -->
 
 </body>
 </html>
