@@ -71,88 +71,101 @@
         </div>
     </nav>
 
-    <!-- Toolbar Header -->
-    <div class="bg-white border-b border-gray-200 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-            <h2 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-layer-group text-blue-600 mr-2"></i>PDF 合併重組</h2>
-            
-            <div class="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-                <!-- View Mode Tabs -->
-                <div class="flex rounded-lg shadow-sm" role="group">
-                    <button id="tabFiles" class="tab-btn px-3 py-1.5 md:px-4 text-sm font-medium rounded-l-lg hover:bg-gray-50 transition">
-                        <i class="fa-solid fa-list mr-1"></i> 檔案
-                    </button>
-                    <button id="tabPage" class="tab-btn px-3 py-1.5 md:px-4 text-sm font-medium rounded-r-lg hover:bg-gray-50 transition active">
-                        <i class="fa-solid fa-grid-2 mr-1"></i> 頁面
-                    </button>
-                </div>
-
-                <div class="flex gap-2 items-center">
-                    <input type="file" id="addFileInput" accept=".pdf" class="hidden" multiple>
-                    <button onclick="document.getElementById('addFileInput').click()" class="px-3 py-1.5 text-sm text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 rounded-lg transition flex items-center gap-1">
-                        <i class="fa-solid fa-plus"></i> <span class="hidden md:inline">加入檔案</span>
-                    </button>
-                    <button id="downloadBtn" class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <i class="fa-solid fa-download"></i> <span class="hidden md:inline">合併下載</span><span class="md:hidden">下載</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Main Content -->
-    <main class="flex-grow p-3 md:p-8">
+    <main class="flex-grow p-4 md:p-8 flex flex-col items-center">
         
-        <!-- Empty State / Initial Upload -->
-        <div id="uploadSection" class="max-w-2xl mx-auto mt-10">
-            <div class="border-2 border-dashed border-gray-300 rounded-xl p-10 text-center bg-white hover:border-blue-500 transition cursor-pointer relative shadow-sm" id="dropZone">
-                <input type="file" id="initialFileInput" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" multiple>
-                <div class="pointer-events-none">
-                    <i class="fa-solid fa-cloud-arrow-up text-5xl text-blue-100 mb-4"></i>
-                    <h3 class="text-xl font-medium text-gray-700 mb-2">開始使用</h3>
-                    <p class="text-gray-500 text-sm">點擊或拖曳上傳第一個 PDF 檔案</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Global Loader -->
-        <div id="loaderSection" class="hidden flex-col items-center justify-center mt-20">
-            <div class="loader mb-4"></div>
-            <p class="text-gray-600" id="loadingText">正在處理...</p>
-            <p class="text-gray-400 text-xs mt-2" id="loadingSubText"></p>
-        </div>
-
-        <!-- EDITOR AREA -->
-        <div id="editorArea" class="hidden max-w-7xl mx-auto">
+        <!-- Main Card Container -->
+        <div class="w-full max-w-[85rem] bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[600px]">
             
-            <!-- MODE 1: FILE LIST VIEW -->
-            <div id="fileView" class="hidden max-w-3xl mx-auto">
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 text-sm text-yellow-800 flex items-center">
-                    <i class="fa-solid fa-lightbulb mr-2"></i>
-                    在此調整檔案的串接順序。調整後，請切換回「頁面重組」查看合併結果。
-                </div>
-                <div id="fileListContainer" class="flex flex-col gap-3"></div>
-            </div>
-
-            <!-- MODE 2: PAGE GRID VIEW -->
-            <div id="pageView">
-                <!-- Info Bar & Tools -->
-                <div class="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                    <div class="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-                        <button id="resetOrderBtn" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded transition shadow-sm border border-gray-300" title="保留目前的勾選狀態，僅將順序依照檔案列表重排">
-                            <i class="fa-solid fa-arrow-down-a-z mr-1"></i> 依檔案重排
+            <!-- Card Header (Toolbar) -->
+            <div class="bg-white border-b border-gray-100 p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                    <h1 class="text-2xl font-bold flex items-center gap-2 text-gray-800">
+                        <span class="text-blue-600"><i class="fa-solid fa-layer-group"></i></span>
+                        PDF 合併重組
+                    </h1>
+                    
+                    <!-- View Mode Tabs (Moved here) -->
+                    <div class="flex rounded-lg shadow-sm" role="group">
+                        <button id="tabFiles" class="tab-btn px-3 py-1.5 md:px-4 text-sm font-medium rounded-l-lg hover:bg-gray-50 transition">
+                            <i class="fa-solid fa-list mr-1"></i> 檔案
+                        </button>
+                        <button id="tabPage" class="tab-btn px-3 py-1.5 md:px-4 text-sm font-medium rounded-r-lg hover:bg-gray-50 transition active">
+                            <i class="fa-solid fa-grid-2 mr-1"></i> 頁面
                         </button>
                     </div>
-                    
-                    <div class="text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1 rounded shadow-sm self-end md:self-auto">
-                        總檔案: <span id="totalFilesCount">0</span> | 總頁數: <span id="totalPageCount">0</span> | 輸出: <span id="outputPageCount">0</span>
+                </div>
+
+                <div class="flex gap-2 items-center w-full md:w-auto justify-end">
+                    <input type="file" id="addFileInput" accept=".pdf" class="hidden" multiple>
+                    <button onclick="document.getElementById('addFileInput').click()" class="px-4 py-2 text-sm text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 rounded-lg transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> <span class="">加入檔案</span>
+                    </button>
+                    <button id="downloadBtn" class="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-download"></i> <span class="">合併下載</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="p-4 md:p-8 flex-grow bg-slate-50/30">
+                
+                <!-- Empty State / Initial Upload -->
+                <div id="uploadSection" class="h-full flex flex-col items-center justify-center py-20">
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl p-12 text-center bg-white hover:border-blue-400 hover:bg-blue-50 transition cursor-pointer max-w-xl w-full group" id="dropZone">
+                        <input type="file" id="initialFileInput" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" multiple>
+                        <div class="pointer-events-none">
+                            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 mx-auto mb-6 group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-cloud-arrow-up text-4xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-slate-700 mb-2">拖放 PDF 檔案至此</h3>
+                            <p class="text-slate-500 text-sm">或點擊此處上傳。純前端處理，檔案不離手。</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Page Grid -->
-                <div id="pagesGrid" class="flex flex-col md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4"></div>
-            </div>
+                <!-- Global Loader -->
+                <div id="loaderSection" class="hidden flex-col items-center justify-center py-20">
+                    <div class="loader mb-4"></div>
+                    <p class="text-gray-600 font-medium" id="loadingText">正在處理...</p>
+                    <p class="text-gray-400 text-sm mt-2" id="loadingSubText"></p>
+                </div>
 
+                <!-- EDITOR AREA -->
+                <div id="editorArea" class="hidden h-full">
+                    
+                    <!-- MODE 1: FILE LIST VIEW -->
+                    <div id="fileView" class="hidden max-w-4xl mx-auto">
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6 text-sm text-yellow-800 flex items-center">
+                            <i class="fa-solid fa-lightbulb mr-2"></i>
+                            在此調整檔案的串接順序。調整後，請切換回「頁面重組」查看合併結果。
+                        </div>
+                        <div id="fileListContainer" class="flex flex-col gap-3"></div>
+                    </div>
+
+                    <!-- MODE 2: PAGE GRID VIEW -->
+                    <div id="pageView" class="h-full flex flex-col">
+                        <!-- Info Bar & Tools -->
+                        <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                            <div class="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                                <button id="resetOrderBtn" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded transition border border-gray-200 flex items-center gap-1" title="保留目前的勾選狀態，僅將順序依照檔案列表重排">
+                                    <i class="fa-solid fa-arrow-down-a-z"></i> 依檔案重排
+                                </button>
+                                <span class="hidden md:inline text-gray-300 mx-2">|</span>
+                                <span class="text-xs text-gray-400"><i class="fa-solid fa-circle-info mr-1"></i>拖曳卡片調整順序，點擊縮圖可預覽</span>
+                            </div>
+                            
+                            <div class="text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 px-3 py-1 rounded shadow-sm self-end md:self-auto">
+                                總檔案: <span id="totalFilesCount">0</span> | 總頁數: <span id="totalPageCount">0</span> | 輸出: <span id="outputPageCount">0</span>
+                            </div>
+                        </div>
+
+                        <!-- Page Grid -->
+                        <div id="pagesGrid" class="flex flex-col md:grid md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 md:gap-4 pb-10"></div>
+                    </div>
+
+                </div>
+            </div>
         </div>
     </main>
 
@@ -183,9 +196,9 @@
         </div>
     </footer>
 
-    <!-- Templates & Scripts (Same logic as before) -->
+    <!-- Templates & Scripts (Logic Unchanged) -->
     <template id="fileItemTemplate">
-        <div class="file-item bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex items-center justify-between group" data-doc-id="">
+        <div class="file-item bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex items-center justify-between group hover:border-blue-300 transition" data-doc-id="">
             <div class="flex items-center gap-3 overflow-hidden">
                 <div class="drag-handle-file p-2 text-gray-400 hover:text-blue-500 cursor-grab active:cursor-grabbing">
                     <i class="fa-solid fa-bars"></i>
@@ -203,8 +216,8 @@
     </template>
 
     <template id="pageCardTemplate">
-        <div class="pdf-page-card bg-white rounded-lg shadow-sm border border-gray-200 relative group flex flex-row md:flex-col items-center md:items-stretch p-2 md:p-3 gap-3 md:gap-0 h-24 md:h-auto" data-unique-id="">
-            <div class="drag-handle md:absolute md:top-2 md:right-2 md:z-10 cursor-grab active:cursor-grabbing p-2 text-gray-400 hover:text-blue-500 md:bg-white/80 md:rounded md:shadow-sm">
+        <div class="pdf-page-card bg-white rounded-lg shadow-sm border border-gray-200 relative group flex flex-row md:flex-col items-center md:items-stretch p-2 md:p-3 gap-3 md:gap-0 h-24 md:h-auto hover:shadow-md transition-shadow" data-unique-id="">
+            <div class="drag-handle md:absolute md:top-2 md:right-2 md:z-10 cursor-grab active:cursor-grabbing p-2 text-gray-400 hover:text-blue-500 md:bg-white/90 md:rounded md:shadow-sm transition-colors">
                 <i class="fa-solid fa-grip-lines fa-lg md:hidden"></i>
                 <i class="fa-solid fa-grip-vertical hidden md:block"></i>
             </div>
@@ -230,143 +243,468 @@
     </template>
 
     <script>
+        // --- 1. GLOBALS & INIT ---
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        let documents = [];
-        let currentView = 'page';
+
+        // State
+        let documents = []; // Array of { id, file, pdfDoc(pdfjs), pdfLibDoc, name, color, pages: [{imgData, pageIndex}] }
+        let currentView = 'page'; // 'page' or 'file'
+
+        // Colors for differentiation
         const fileColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
+
         const elements = {
-            initialInput: document.getElementById('initialFileInput'), addInput: document.getElementById('addFileInput'), dropZone: document.getElementById('dropZone'),
-            uploadSection: document.getElementById('uploadSection'), loaderSection: document.getElementById('loaderSection'), editorArea: document.getElementById('editorArea'),
-            loadingText: document.getElementById('loadingText'), loadingSubText: document.getElementById('loadingSubText'), fileView: document.getElementById('fileView'),
-            pageView: document.getElementById('pageView'), fileListContainer: document.getElementById('fileListContainer'), pagesGrid: document.getElementById('pagesGrid'),
-            tabFiles: document.getElementById('tabFiles'), tabPage: document.getElementById('tabPage'), downloadBtn: document.getElementById('downloadBtn'),
-            resetOrderBtn: document.getElementById('resetOrderBtn'), totalFiles: document.getElementById('totalFilesCount'), totalPage: document.getElementById('totalPageCount'),
-            outputPage: document.getElementById('outputPageCount'), previewModal: document.getElementById('previewModal'), previewImage: document.getElementById('previewImage'),
-            previewLoader: document.getElementById('previewLoader'), previewFileName: document.getElementById('previewFileName'), previewPageNum: document.getElementById('previewPageNum'),
+            initialInput: document.getElementById('initialFileInput'),
+            addInput: document.getElementById('addFileInput'),
+            dropZone: document.getElementById('dropZone'),
+            uploadSection: document.getElementById('uploadSection'),
+            loaderSection: document.getElementById('loaderSection'),
+            editorArea: document.getElementById('editorArea'),
+            loadingText: document.getElementById('loadingText'),
+            loadingSubText: document.getElementById('loadingSubText'),
+            
+            // Views
+            fileView: document.getElementById('fileView'),
+            pageView: document.getElementById('pageView'),
+            fileListContainer: document.getElementById('fileListContainer'),
+            pagesGrid: document.getElementById('pagesGrid'),
+            
+            // Tabs & Buttons
+            tabFiles: document.getElementById('tabFiles'),
+            tabPage: document.getElementById('tabPage'),
+            downloadBtn: document.getElementById('downloadBtn'),
+            resetOrderBtn: document.getElementById('resetOrderBtn'),
+
+            // Counts
+            totalFiles: document.getElementById('totalFilesCount'),
+            totalPage: document.getElementById('totalPageCount'),
+            outputPage: document.getElementById('outputPageCount'),
+
+            // Preview
+            previewModal: document.getElementById('previewModal'),
+            previewImage: document.getElementById('previewImage'),
+            previewLoader: document.getElementById('previewLoader'),
+            previewFileName: document.getElementById('previewFileName'),
+            previewPageNum: document.getElementById('previewPageNum'),
             closeModalBtn: document.getElementById('closeModalBtn')
         };
+
+        // --- 2. EVENT LISTENERS ---
+
+        // File Inputs
         elements.initialInput.addEventListener('change', (e) => handleFiles(e.target.files));
         elements.addInput.addEventListener('change', (e) => handleFiles(e.target.files));
-        elements.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); elements.dropZone.classList.add('border-blue-500'); });
-        elements.dropZone.addEventListener('dragleave', () => elements.dropZone.classList.remove('border-blue-500'));
-        elements.dropZone.addEventListener('drop', (e) => { e.preventDefault(); elements.dropZone.classList.remove('border-blue-500'); handleFiles(e.dataTransfer.files); });
+
+        // Drag & Drop
+        elements.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); elements.dropZone.classList.add('border-blue-500', 'bg-blue-50'); });
+        elements.dropZone.addEventListener('dragleave', () => elements.dropZone.classList.remove('border-blue-500', 'bg-blue-50'));
+        elements.dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            elements.dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // Tabs
         elements.tabFiles.addEventListener('click', () => switchView('file'));
         elements.tabPage.addEventListener('click', () => switchView('page'));
-        elements.resetOrderBtn.addEventListener('click', () => { if(confirm('依照「檔案列表」順序重新排列？(保留勾選狀態)')) renderPagesGrid(true); });
+
+        // Reset Order
+        elements.resetOrderBtn.addEventListener('click', () => {
+            if(confirm('這將會依照「檔案列表」的順序重新排列所有頁面。\n\n（您的勾選/排除狀態將會保留）')) {
+                renderPagesGrid(true); // true = force rebuild from document list order
+            }
+        });
+
+        // Download
         elements.downloadBtn.addEventListener('click', saveAndDownload);
+
+        // Preview Modal
         elements.closeModalBtn.addEventListener('click', closePreview);
         elements.previewModal.addEventListener('click', (e) => { if(e.target === elements.previewModal) closePreview(); });
         document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closePreview(); });
+
+        // --- 3. CORE LOGIC ---
+
         async function handleFiles(fileList) {
             if (!fileList || fileList.length === 0) return;
-            if (documents.length === 0) { elements.uploadSection.classList.add('hidden'); elements.editorArea.classList.remove('hidden'); }
-            elements.loaderSection.classList.remove('hidden'); elements.loaderSection.classList.add('flex'); elements.editorArea.classList.add('opacity-50', 'pointer-events-none');
-            const files = Array.from(fileList).filter(f => f.type === 'application/pdf');
-            for (let i = 0; i < files.length; i++) {
-                elements.loadingText.textContent = `處理檔案 ${i + 1}/${files.length}`;
-                try { await processSingleFile(files[i]); } catch (err) { alert(`無法讀取 ${files[i].name}`); }
+
+            // UI Updates
+            if (documents.length === 0) {
+                elements.uploadSection.classList.add('hidden');
+                elements.editorArea.classList.remove('hidden');
             }
-            elements.loaderSection.classList.add('hidden'); elements.loaderSection.classList.remove('flex'); elements.editorArea.classList.remove('opacity-50', 'pointer-events-none');
-            updateStats(); renderFileList(); renderPagesGrid(false); initPageSortable(); initFileSortable();
+            elements.loaderSection.classList.remove('hidden');
+            elements.loaderSection.classList.add('flex');
+            elements.editorArea.classList.add('opacity-50', 'pointer-events-none'); // Lock UI
+
+            const files = Array.from(fileList).filter(f => f.type === 'application/pdf');
+            
+            for (let i = 0; i < files.length; i++) {
+                elements.loadingText.textContent = `正在處理檔案 ${i + 1}/${files.length}: ${files[i].name}`;
+                elements.loadingSubText.textContent = '';
+                try {
+                    await processSingleFile(files[i]);
+                } catch (err) {
+                    console.error(err);
+                    alert(`無法讀取 ${files[i].name}: ${err.message}`);
+                }
+            }
+
+            // Restore UI
+            elements.loaderSection.classList.add('hidden');
+            elements.loaderSection.classList.remove('flex');
+            elements.editorArea.classList.remove('opacity-50', 'pointer-events-none');
+            
+            updateStats();
+            renderFileList();
+            renderPagesGrid(false); // Append new pages
+            
+            // Re-init sortables
+            initPageSortable();
+            initFileSortable();
         }
+
         async function processSingleFile(file) {
             const arrayBuffer = await file.arrayBuffer();
+            
+            // Clone for PDF.js to avoid detachment
             const bufferCopy = arrayBuffer.slice(0);
+            
             const pdfDoc = await pdfjsLib.getDocument(bufferCopy).promise;
+            
+            // Generate Thumbnails
             const pages = [];
             for (let i = 1; i <= pdfDoc.numPages; i++) {
                 const page = await pdfDoc.getPage(i);
-                const viewport = page.getViewport({ scale: 0.3 });
-                const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-                canvas.width = viewport.width; canvas.height = viewport.height;
+                const viewport = page.getViewport({ scale: 0.3 }); // Low res for grid
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
                 await page.render({ canvasContext: ctx, viewport }).promise;
-                pages.push({ pageIndex: i - 1, displayNum: i, thumbnailData: canvas.toDataURL(), width: viewport.width, height: viewport.height });
+                
+                pages.push({
+                    pageIndex: i - 1, // 0-based for pdf-lib
+                    displayNum: i,
+                    thumbnailData: canvas.toDataURL(),
+                    width: viewport.width,
+                    height: viewport.height
+                });
             }
-            documents.push({ id: Date.now() + Math.random().toString(36).substr(2, 9), file, arrayBuffer, pdfDoc, name: file.name, color: fileColors[documents.length % fileColors.length], pages });
+
+            const docId = Date.now() + Math.random().toString(36).substr(2, 9);
+            const colorIndex = documents.length % fileColors.length;
+
+            documents.push({
+                id: docId,
+                file: file,
+                arrayBuffer: arrayBuffer, // Keeps the valid original buffer
+                pdfDoc: pdfDoc,
+                name: file.name,
+                color: fileColors[colorIndex],
+                pages: pages
+            });
         }
+
+        // --- 4. VIEW RENDERING ---
+
         function switchView(mode) {
             currentView = mode;
-            if (mode === 'file') { elements.tabFiles.classList.add('active'); elements.tabPage.classList.remove('active'); elements.fileView.classList.remove('hidden'); elements.pageView.classList.add('hidden'); }
-            else { elements.tabPage.classList.add('active'); elements.tabFiles.classList.remove('active'); elements.pageView.classList.remove('hidden'); elements.fileView.classList.add('hidden'); reconcilePages(); }
+            if (mode === 'file') {
+                elements.tabFiles.classList.add('active');
+                elements.tabPage.classList.remove('active');
+                elements.fileView.classList.remove('hidden');
+                elements.pageView.classList.add('hidden');
+            } else {
+                elements.tabPage.classList.add('active');
+                elements.tabFiles.classList.remove('active');
+                elements.pageView.classList.remove('hidden');
+                elements.fileView.classList.add('hidden');
+                
+                reconcilePages();
+            }
         }
+
         function renderFileList() {
             elements.fileListContainer.innerHTML = '';
-            documents.forEach((doc) => {
-                const clone = document.getElementById('fileItemTemplate').content.cloneNode(true);
-                const item = clone.querySelector('.file-item'); item.dataset.docId = doc.id;
-                item.querySelector('.file-name').textContent = doc.name; item.querySelector('.page-count').textContent = doc.pages.length;
+            const template = document.getElementById('fileItemTemplate');
+
+            documents.forEach((doc, index) => {
+                const clone = template.content.cloneNode(true);
+                const item = clone.querySelector('.file-item');
+                
+                item.dataset.docId = doc.id;
+                item.querySelector('.file-name').textContent = doc.name;
+                item.querySelector('.page-count').textContent = doc.pages.length;
                 item.querySelector('.file-color-indicator').style.backgroundColor = doc.color;
-                item.querySelector('.remove-file-btn').addEventListener('click', () => { if(confirm(`移除 ${doc.name}?`)) removeDocument(doc.id); });
+                
+                // Remove Button
+                item.querySelector('.remove-file-btn').addEventListener('click', () => {
+                    if(confirm(`確定要移除 ${doc.name} 嗎？該檔案的所有頁面將被刪除。`)) {
+                        removeDocument(doc.id);
+                    }
+                });
+
                 elements.fileListContainer.appendChild(clone);
             });
         }
+
         function renderPagesGrid(forceReset = false) {
             const template = document.getElementById('pageCardTemplate');
+            
             let savedStates = new Map();
+            
             if (forceReset) {
-                document.querySelectorAll('.pdf-page-card').forEach(c => { const cb = c.querySelector('.include-checkbox'); if (cb) savedStates.set(c.dataset.uniqueId, cb.checked); });
+                document.querySelectorAll('.pdf-page-card').forEach(card => {
+                    const checkbox = card.querySelector('.include-checkbox');
+                    if (checkbox) {
+                        savedStates.set(card.dataset.uniqueId, checkbox.checked);
+                    }
+                });
                 elements.pagesGrid.innerHTML = '';
-                documents.forEach(doc => doc.pages.forEach(p => createAndAppendCard(doc, p, template, savedStates)));
+                documents.forEach(doc => {
+                    doc.pages.forEach(page => {
+                        createAndAppendCard(doc, page, template, savedStates);
+                    });
+                });
             } else {
-                const existingIds = new Set(); document.querySelectorAll('.pdf-page-card').forEach(c => existingIds.add(c.dataset.uniqueId));
-                documents.forEach(doc => doc.pages.forEach(p => { if (!existingIds.has(`${doc.id}-${p.pageIndex}`)) createAndAppendCard(doc, p, template, null); }));
+                const existingIds = new Set();
+                document.querySelectorAll('.pdf-page-card').forEach(card => {
+                    existingIds.add(card.dataset.uniqueId);
+                });
+                documents.forEach(doc => {
+                    doc.pages.forEach(page => {
+                        const uniqueId = `${doc.id}-${page.pageIndex}`;
+                        if (!existingIds.has(uniqueId)) {
+                            createAndAppendCard(doc, page, template, null);
+                        }
+                    });
+                });
             }
             updatePageNumbers();
         }
+
         function createAndAppendCard(doc, page, template, savedStates) {
-            const clone = template.content.cloneNode(true); const card = clone.querySelector('.pdf-page-card');
-            const uniqueId = `${doc.id}-${page.pageIndex}`; card.dataset.uniqueId = uniqueId; card.dataset.docId = doc.id; card.dataset.pageIndex = page.pageIndex;
-            card.querySelector('.thumbnail-container').style.borderColor = doc.color + '40'; card.querySelector('img').src = page.thumbnailData;
-            card.querySelector('.file-badge').title = doc.name; card.querySelector('.file-badge span:first-child').style.backgroundColor = doc.color;
-            card.querySelector('.original-page-num').textContent = page.displayNum;
+            const clone = template.content.cloneNode(true);
+            const card = clone.querySelector('.pdf-page-card');
+            
+            const uniqueId = `${doc.id}-${page.pageIndex}`;
+            card.dataset.uniqueId = uniqueId;
+            card.dataset.docId = doc.id;
+            card.dataset.pageIndex = page.pageIndex; 
+            
+            const thumbDiv = card.querySelector('.thumbnail-container');
+            thumbDiv.style.borderColor = doc.color + '40';
+            card.querySelector('img').src = page.thumbnailData;
+            
+            const badge = card.querySelector('.file-badge');
+            badge.title = doc.name;
+            badge.querySelector('span:first-child').style.backgroundColor = doc.color;
+            badge.querySelector('.original-page-num').textContent = page.displayNum;
+
             const checkbox = card.querySelector('.include-checkbox');
-            checkbox.checked = (savedStates && savedStates.has(uniqueId)) ? savedStates.get(uniqueId) : true;
+            if (savedStates && savedStates.has(uniqueId)) {
+                checkbox.checked = savedStates.get(uniqueId);
+            } else {
+                checkbox.checked = true;
+            }
             applyCardVisualState(card, checkbox.checked);
-            checkbox.addEventListener('change', (e) => { applyCardVisualState(card, e.target.checked); updatePageNumbers(); });
-            card.querySelector('.thumbnail-container').addEventListener('click', () => openPreview(doc.id, page.pageIndex));
+
+            checkbox.addEventListener('change', (e) => {
+                applyCardVisualState(card, e.target.checked);
+                updatePageNumbers();
+            });
+            
+            thumbDiv.addEventListener('click', () => openPreview(doc.id, page.pageIndex));
+
             elements.pagesGrid.appendChild(clone);
         }
-        function removeDocument(docId) { documents = documents.filter(d => d.id !== docId); document.querySelectorAll(`.pdf-page-card[data-doc-id="${docId}"]`).forEach(c => c.remove()); renderFileList(); updateStats(); updatePageNumbers(); if(documents.length === 0) location.reload(); }
-        function reconcilePages() { const validDocIds = new Set(documents.map(d => d.id)); let changes = false; document.querySelectorAll('.pdf-page-card').forEach(c => { if(!validDocIds.has(c.dataset.docId)) { c.remove(); changes = true; } }); if(changes) updatePageNumbers(); }
-        function applyCardVisualState(card, checked) { if(checked) card.classList.remove('disabled-page'); else card.classList.add('disabled-page'); }
-        function updatePageNumbers() {
-            let counter = 1; let active = 0;
-            document.querySelectorAll('.pdf-page-card').forEach(c => {
-                const checked = c.querySelector('.include-checkbox').checked; const ns = c.querySelector('.new-page-num');
-                if(checked) { ns.textContent = counter++; ns.classList.add('text-blue-600'); ns.classList.remove('text-gray-400'); active++; }
-                else { ns.textContent = '-'; ns.classList.remove('text-blue-600'); ns.classList.add('text-gray-400'); }
-            });
-            elements.totalFiles.textContent = documents.length; elements.totalPage.textContent = document.querySelectorAll('.pdf-page-card').length; elements.outputPage.textContent = active;
+
+        // --- 5. LOGIC HELPERS ---
+
+        function removeDocument(docId) {
+            documents = documents.filter(d => d.id !== docId);
+            const cardsToRemove = document.querySelectorAll(`.pdf-page-card[data-doc-id="${docId}"]`);
+            cardsToRemove.forEach(card => card.remove());
+            renderFileList();
+            updateStats();
+            updatePageNumbers();
+            if(documents.length === 0) location.reload();
         }
-        function updateStats() { elements.totalFiles.textContent = documents.length; }
-        function initPageSortable() { new Sortable(elements.pagesGrid, { animation: 150, ghostClass: 'sortable-ghost', dragClass: 'sortable-drag', handle: '.drag-handle', onEnd: updatePageNumbers }); }
-        function initFileSortable() { new Sortable(elements.fileListContainer, { animation: 150, handle: '.drag-handle-file', ghostClass: 'sortable-ghost', onEnd: () => { const newOrder = []; elements.fileListContainer.querySelectorAll('.file-item').forEach(item => { const doc = documents.find(d => d.id === item.dataset.docId); if(doc) newOrder.push(doc); }); documents = newOrder; } }); }
-        async function openPreview(docId, pageIndex) {
-            const doc = documents.find(d => d.id === docId); if(!doc) return;
-            elements.previewModal.classList.remove('hidden'); elements.previewLoader.classList.remove('hidden'); elements.previewImage.classList.add('hidden');
-            elements.previewFileName.textContent = doc.name; elements.previewPageNum.textContent = pageIndex + 1;
-            const page = await doc.pdfDoc.getPage(pageIndex + 1); const scale = window.devicePixelRatio > 1 ? 2.0 : 1.5; const viewport = page.getViewport({ scale });
-            const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); canvas.width = viewport.width; canvas.height = viewport.height;
-            await page.render({ canvasContext: ctx, viewport }).promise;
-            elements.previewImage.src = canvas.toDataURL(); elements.previewImage.onload = () => { elements.previewLoader.classList.add('hidden'); elements.previewImage.classList.remove('hidden'); };
-        }
-        function closePreview() { elements.previewModal.classList.add('hidden'); setTimeout(() => elements.previewImage.src = '', 300); }
-        async function saveAndDownload() {
-            const cards = Array.from(document.querySelectorAll('.pdf-page-card')).filter(c => c.querySelector('.include-checkbox').checked);
-            if(cards.length === 0) return alert('請至少選擇一頁');
-            const btn = elements.downloadBtn; const originalText = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...'; btn.disabled = true;
-            elements.loaderSection.classList.remove('hidden'); elements.loaderSection.classList.add('flex'); elements.editorArea.classList.add('opacity-50', 'pointer-events-none');
-            try {
-                const newPdfDoc = await PDFLib.PDFDocument.create(); const pdfLibDocsCache = {};
-                for(let i=0; i<cards.length; i++) {
-                    const c = cards[i]; const docId = c.dataset.docId; const pageIndex = parseInt(c.dataset.pageIndex);
-                    elements.loadingText.textContent = `生成頁面 ${i+1}/${cards.length}`;
-                    if(!pdfLibDocsCache[docId]) pdfLibDocsCache[docId] = await PDFLib.PDFDocument.load(documents.find(d => d.id === docId).arrayBuffer);
-                    const [copiedPage] = await newPdfDoc.copyPages(pdfLibDocsCache[docId], [pageIndex]); newPdfDoc.addPage(copiedPage);
+
+        function reconcilePages() {
+            const validDocIds = new Set(documents.map(d => d.id));
+            const cards = document.querySelectorAll('.pdf-page-card');
+            let changes = false;
+            cards.forEach(card => {
+                if(!validDocIds.has(card.dataset.docId)) {
+                    card.remove();
+                    changes = true;
                 }
-                const pdfBytes = await newPdfDoc.save(); const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-                const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `reordered_${Date.now()}.pdf`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
-            } catch (err) { alert('匯出失敗: ' + err.message); } finally { btn.innerHTML = originalText; btn.disabled = false; elements.loaderSection.classList.add('hidden'); elements.loaderSection.classList.remove('flex'); elements.editorArea.classList.remove('opacity-50', 'pointer-events-none'); }
+            });
+            if(changes) updatePageNumbers();
+        }
+
+        function applyCardVisualState(card, checked) {
+            if(checked) card.classList.remove('disabled-page');
+            else card.classList.add('disabled-page');
+        }
+
+        function updatePageNumbers() {
+            const cards = document.querySelectorAll('.pdf-page-card');
+            let counter = 1;
+            let active = 0;
+            cards.forEach(card => {
+                const checked = card.querySelector('.include-checkbox').checked;
+                const numSpan = card.querySelector('.new-page-num');
+                if(checked) {
+                    numSpan.textContent = counter++;
+                    numSpan.classList.remove('text-gray-400');
+                    numSpan.classList.add('text-blue-600');
+                    active++;
+                } else {
+                    numSpan.textContent = '-';
+                    numSpan.classList.remove('text-blue-600');
+                    numSpan.classList.add('text-gray-400');
+                }
+            });
+            elements.totalFiles.textContent = documents.length;
+            elements.totalPage.textContent = cards.length;
+            elements.outputPage.textContent = active;
+        }
+
+        function updateStats() {
+            elements.totalFiles.textContent = documents.length;
+        }
+
+        // --- 6. SORTABLE ---
+
+        function initPageSortable() {
+            new Sortable(elements.pagesGrid, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                dragClass: 'sortable-drag',
+                handle: '.drag-handle',
+                onEnd: updatePageNumbers
+            });
+        }
+
+        function initFileSortable() {
+            new Sortable(elements.fileListContainer, {
+                animation: 150,
+                handle: '.drag-handle-file',
+                ghostClass: 'sortable-ghost',
+                onEnd: (evt) => {
+                    const newOrder = [];
+                    const items = elements.fileListContainer.querySelectorAll('.file-item');
+                    items.forEach(item => {
+                        const doc = documents.find(d => d.id === item.dataset.docId);
+                        if(doc) newOrder.push(doc);
+                    });
+                    documents = newOrder;
+                }
+            });
+        }
+
+        // --- 7. PREVIEW ---
+
+        async function openPreview(docId, pageIndex) {
+            const doc = documents.find(d => d.id === docId);
+            if(!doc) return;
+
+            elements.previewModal.classList.remove('hidden');
+            elements.previewLoader.classList.remove('hidden');
+            elements.previewImage.classList.add('hidden');
+            elements.previewFileName.textContent = doc.name;
+            elements.previewPageNum.textContent = pageIndex + 1;
+
+            try {
+                const page = await doc.pdfDoc.getPage(pageIndex + 1); 
+                const scale = window.devicePixelRatio > 1 ? 2.0 : 1.5;
+                const viewport = page.getViewport({ scale });
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                await page.render({ canvasContext: ctx, viewport }).promise;
+                elements.previewImage.src = canvas.toDataURL();
+                elements.previewImage.onload = () => {
+                    elements.previewLoader.classList.add('hidden');
+                    elements.previewImage.classList.remove('hidden');
+                };
+            } catch(e) {
+                console.error(e);
+                alert('預覽失敗');
+                closePreview();
+            }
+        }
+
+        function closePreview() {
+            elements.previewModal.classList.add('hidden');
+            setTimeout(() => elements.previewImage.src = '', 300);
+        }
+
+        // --- 8. EXPORT (Modified for No Compression) ---
+
+        async function saveAndDownload() {
+            const cards = document.querySelectorAll('.pdf-page-card');
+            const activeCards = Array.from(cards).filter(c => c.querySelector('.include-checkbox').checked);
+
+            if(activeCards.length === 0) return alert('請至少選擇一頁');
+
+            const btn = elements.downloadBtn;
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
+            btn.disabled = true;
+            elements.loaderSection.classList.remove('hidden');
+            elements.loaderSection.classList.add('flex');
+            elements.editorArea.classList.add('opacity-50', 'pointer-events-none');
+
+            try {
+                const newPdfDoc = await PDFLib.PDFDocument.create();
+                
+                // Cache for source docs (PDFLib instance or just raw data logic)
+                const pdfLibDocsCache = {};
+
+                for (let i = 0; i < activeCards.length; i++) {
+                    const card = activeCards[i];
+                    const docId = card.dataset.docId;
+                    const pageIndex = parseInt(card.dataset.pageIndex);
+                    const sourceDocData = documents.find(d => d.id === docId);
+
+                    elements.loadingText.textContent = `正在生成頁面 ${i + 1}/${activeCards.length}`;
+                    elements.loadingSubText.textContent = '複製原始資料 (無損)...';
+                        
+                    if(!pdfLibDocsCache[docId]) {
+                        pdfLibDocsCache[docId] = await PDFLib.PDFDocument.load(sourceDocData.arrayBuffer);
+                    }
+                    const sourcePdfDoc = pdfLibDocsCache[docId];
+                    const [copiedPage] = await newPdfDoc.copyPages(sourcePdfDoc, [pageIndex]);
+                    newPdfDoc.addPage(copiedPage);
+                }
+
+                elements.loadingText.textContent = '正在打包 PDF...';
+                const pdfBytes = await newPdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `reordered_${Date.now()}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+            } catch (err) {
+                console.error(err);
+                alert('匯出失敗: ' + err.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                elements.loaderSection.classList.add('hidden');
+                elements.loaderSection.classList.remove('flex');
+                elements.editorArea.classList.remove('opacity-50', 'pointer-events-none');
+                elements.loadingSubText.textContent = '';
+            }
         }
     </script>
 </body>
