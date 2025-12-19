@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PurePDF - 免費、安全、純前端的 PDF 工具箱</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
+        .tool-card:hover { transform: translateY(-5px); }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-lg group-hover:bg-blue-700 transition">P</div>
+                <span class="text-xl font-bold text-gray-800 tracking-tight">PurePDF</span>
+            </a>
+            <div class="flex gap-4 text-sm font-medium text-gray-600">
+                <a href="pdf_reorder.html" class="hover:text-blue-600 transition">合併重組</a>
+                <a href="pdf_to_jpg.html" class="hover:text-blue-600 transition">PDF 轉 JPG</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-white border-b border-gray-100 py-16 md:py-24">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                您的文件，<span class="text-blue-600">絕不上傳</span>雲端
+            </h1>
+            <p class="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+                PurePDF 提供純瀏覽器端的 PDF 處理工具。所有運算皆在您的設備上完成，確保 100% 的隱私與安全。無需安裝軟體，即開即用。
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="#tools" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                    開始使用
+                </a>
+                <a href="https://github.com/minghanbai/PurePDF/" target="_blank" class="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition">
+                    <i class="fa-brands fa-github mr-2"></i> GitHub
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Tools Grid -->
+    <main id="tools" class="flex-grow py-16 px-4">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">選擇工具</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                
+                <!-- Tool 1: Reorder -->
+                <a href="pdf_reorder.html" class="tool-card bg-white p-8 rounded-2xl shadow-sm border border-gray-200 transition duration-300 hover:shadow-xl hover:border-blue-300 group">
+                    <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-layer-group"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 group-hover:text-blue-600 transition">PDF 合併重組</h3>
+                    <p class="text-gray-500 leading-relaxed">
+                        支援多個檔案載入。拖曳調整頁面順序、刪除不需要的頁面，並合併為一個新的 PDF 檔案。
+                    </p>
+                </a>
+
+                <!-- Tool 2: To JPG -->
+                <a href="pdf_to_jpg.html" class="tool-card bg-white p-8 rounded-2xl shadow-sm border border-gray-200 transition duration-300 hover:shadow-xl hover:border-purple-300 group">
+                    <div class="w-14 h-14 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition">
+                        <i class="fa-regular fa-image"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 group-hover:text-purple-600 transition">PDF 轉 JPG</h3>
+                    <p class="text-gray-500 leading-relaxed">
+                        將 PDF 頁面轉換為高解析度圖片。支援自訂 DPI、紙張大小，並可一鍵打包下載。
+                    </p>
+                </a>
+
+                <!-- Tool 3: Coming Soon -->
+                <div class="bg-gray-50 p-8 rounded-2xl border border-dashed border-gray-300 flex flex-col items-center justify-center text-center opacity-70">
+                    <div class="w-14 h-14 bg-gray-200 text-gray-400 rounded-xl flex items-center justify-center text-2xl mb-6">
+                        <i class="fa-solid fa-hammer"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-500 mb-2">更多工具</h3>
+                    <p class="text-gray-400 text-sm">開發中，敬請期待...</p>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-100 border-t border-gray-200 py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="flex items-center justify-center gap-2 mb-4 text-gray-400 text-sm">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>Secure Client-Side Processing</span>
+            </div>
+            <p class="text-gray-500 text-sm">
+                &copy; 2024 PurePDF. All rights reserved. 
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>
