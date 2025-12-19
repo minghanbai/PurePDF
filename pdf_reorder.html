@@ -196,7 +196,7 @@
         </div>
     </footer>
 
-    <!-- Templates & Scripts (Logic Unchanged) -->
+    <!-- Templates & Scripts -->
     <template id="fileItemTemplate">
         <div class="file-item bg-white p-3 rounded-lg shadow-sm border border-gray-200 flex items-center justify-between group hover:border-blue-300 transition" data-doc-id="">
             <div class="flex items-center gap-3 overflow-hidden">
@@ -215,24 +215,32 @@
         </div>
     </template>
 
+    <!-- Page Card Template (Updated for visibility) -->
     <template id="pageCardTemplate">
         <div class="pdf-page-card bg-white rounded-lg shadow-sm border border-gray-200 relative group flex flex-row md:flex-col items-center md:items-stretch p-2 md:p-3 gap-3 md:gap-0 h-24 md:h-auto hover:shadow-md transition-shadow" data-unique-id="">
+            <!-- Drag Handle (Top Right) -->
             <div class="drag-handle md:absolute md:top-2 md:right-2 md:z-10 cursor-grab active:cursor-grabbing p-2 text-gray-400 hover:text-blue-500 md:bg-white/90 md:rounded md:shadow-sm transition-colors">
                 <i class="fa-solid fa-grip-lines fa-lg md:hidden"></i>
                 <i class="fa-solid fa-grip-vertical hidden md:block"></i>
             </div>
-            <div class="flex-shrink-0 md:flex md:justify-between md:items-center md:mb-2 md:pb-2 md:border-b md:border-gray-100 order-last md:order-first flex flex-col md:flex-row items-end md:items-center">
+            
+            <!-- Header Row: Checkbox & Badge (Moved to justify-start to avoid overlap) -->
+            <div class="flex-shrink-0 md:flex md:justify-start md:items-center md:gap-2 md:mb-2 md:pb-2 md:border-b md:border-gray-100 order-last md:order-first flex flex-col md:flex-row items-end md:items-center">
                 <label class="flex items-center cursor-pointer select-none p-1">
                     <input type="checkbox" class="include-checkbox form-checkbox h-5 w-5 md:h-4 md:w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500" checked>
                 </label>
-                <div class="file-badge text-[10px] md:text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded mt-1 md:mt-0 max-w-[80px] truncate flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full inline-block"></span>
-                    <span class="font-mono original-page-num">1</span>
+                <!-- Color Block Badge (White text on color bg) -->
+                <div class="file-badge text-[10px] md:text-xs text-white px-2 py-0.5 rounded-md mt-1 md:mt-0 min-w-[24px] text-center font-mono font-bold shadow-sm" title="">
+                    <span class="original-page-num">1</span>
                 </div>
             </div>
+
+            <!-- Thumbnail -->
             <div class="thumbnail thumbnail-container w-16 h-20 md:w-full md:aspect-[1/1.4] md:h-auto bg-gray-100 rounded overflow-hidden flex items-center justify-center relative flex-shrink-0 border border-transparent transition-colors">
                 <img src="" class="w-full h-full object-contain pointer-events-none select-none">
             </div>
+
+            <!-- Footer: New Page Num -->
             <div class="flex-grow flex flex-col justify-center md:items-center md:mt-3 min-w-0">
                 <div class="flex items-baseline gap-1">
                     <span class="md:hidden text-xs text-gray-400">P.</span>
@@ -497,9 +505,10 @@
             thumbDiv.style.borderColor = doc.color + '40';
             card.querySelector('img').src = page.thumbnailData;
             
+            // Badge Logic (Updated for Colored Block)
             const badge = card.querySelector('.file-badge');
             badge.title = doc.name;
-            badge.querySelector('span:first-child').style.backgroundColor = doc.color;
+            badge.style.backgroundColor = doc.color; // Direct BG color
             badge.querySelector('.original-page-num').textContent = page.displayNum;
 
             const checkbox = card.querySelector('.include-checkbox');
