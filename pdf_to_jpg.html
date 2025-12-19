@@ -32,6 +32,9 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- 引入共用佈局腳本 -->
+    <script src="layout.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
@@ -43,37 +46,14 @@
 </head>
 <body class="flex flex-col min-h-screen">
 
-    <!-- Unified Navigation -->
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <a href="index.html" class="flex items-center gap-2 group">
-                <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-lg group-hover:bg-blue-700 transition">P</div>
-                <span class="text-xl font-bold text-gray-800 tracking-tight">PurePDF</span>
-            </a>
-            <div class="flex gap-4 text-sm font-medium text-gray-600">
-                <a href="pdf_reorder.html" class="hover:text-blue-600 transition">合併重組</a>
-                <a href="pdf_to_jpg.html" class="text-blue-600">PDF 轉 JPG</a>
-            </div>
-        </div>
-    </nav>
+    <!-- Header will be injected here by layout.js -->
 
     <!-- Main Content (React Root) -->
     <main class="flex-grow p-4 md:p-8 flex flex-col items-center">
         <div id="root" class="w-full max-w-[85rem]"></div>
     </main>
 
-    <!-- Unified Footer -->
-    <footer class="bg-gray-100 border-t border-gray-200 py-6 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 text-center">
-            <div class="flex items-center justify-center gap-2 mb-2 text-gray-400 text-sm">
-                <i class="fa-solid fa-shield-halved"></i>
-                <span>Secure Client-Side Processing</span>
-            </div>
-            <p class="text-gray-500 text-sm">
-                &copy; 2024 PurePDF. All rights reserved. 
-            </p>
-        </div>
-    </footer>
+    <!-- Footer will be injected here by layout.js -->
 
     <script type="text/babel">
         const { useState, useRef, useEffect, useMemo } = React;
