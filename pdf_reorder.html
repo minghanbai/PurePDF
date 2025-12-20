@@ -235,8 +235,8 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
         // State
-        let documents = []; // Array of { id, file, pdfDoc(pdfjs), pdfLibDoc, name, color, pages: [{imgData, pageIndex}] }
-        let currentView = 'page'; // 'page' or 'file'
+        let documents = []; 
+        let currentView = 'page'; 
 
         // Colors for differentiation
         const fileColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
@@ -347,9 +347,9 @@
             renderFileList();
             renderPagesGrid(false); // Append new pages
             
-            // Re-init sortables
-            initPageSortable();
-            initFileSortable();
+            // 修正：不再此處重複呼叫初始化 Sortable，避免多重實例綁定
+            // initPageSortable();
+            // initFileSortable();
         }
 
         async function processSingleFile(file) {
@@ -695,6 +695,10 @@
                 elements.loadingSubText.textContent = '';
             }
         }
+
+        // Initialize Sortables once at startup
+        initPageSortable();
+        initFileSortable();
     </script>
 </body>
 </html>
