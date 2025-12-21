@@ -30,22 +30,32 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 4. 設定導航列 Active 狀態 (高亮當前頁面)
     const currentPath = window.location.pathname;
-    const navLinks = document.querySelectorAll('.nav-link'); // 選取所有導航連結
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    // 判斷當前頁面以設定 Active 狀態 (包含 index.html 和其他工具頁面)
+    // 這裡我們手動定義頁面與 href 的對應，確保精確
+    const pageMap = {
+        'pdf_reorder.html': 'pdf_reorder.html',
+        'pdf_to_jpg.html': 'pdf_to_jpg.html',
+        'pdf_booklet.html': 'pdf_booklet.html',
+        'jpg_to_pdf.html': 'jpg_to_pdf.html', // 新增
+        'about.html': 'about.html'
+    };
+
+    // 找出當前對應的 key
+    let activeHref = '';
+    for (const [page, href] of Object.entries(pageMap)) {
+        if (currentPath.includes(page)) {
+            activeHref = href;
+            break;
+        }
+    }
 
     navLinks.forEach(link => {
-        const href = link.getAttribute('href');
-        
-        // 判斷邏輯：如果當前路徑包含 href (例如 pdf_reorder.html)
-        // 或者當前是首頁且 href 是 index.html (或是 / )
-        if (currentPath.includes(href) && href !== 'index.html') {
-            setActive(link);
-        } else if (href === 'about.html' && currentPath.includes('about.html')) {
-            setActive(link);
+        const linkHref = link.getAttribute('href');
+        if (linkHref === activeHref) {
+            link.classList.add('text-blue-600');
+            link.classList.remove('text-gray-600');
         }
     });
-
-    function setActive(link) {
-        link.classList.add('text-blue-600');
-        link.classList.remove('text-gray-600');
-    }
 });

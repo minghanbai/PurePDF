@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JPG 轉 PDF - PurePDF</title>
+    
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Libraries -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- 引入共用佈局腳本 -->
+    <script src="layout.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#64748b',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Grid Alignment Button Styles */
+        .align-btn { transition: all 0.2s; }
+        .align-btn:not(:disabled):hover { background-color: #e0f2fe; }
+        .align-btn.active { background-color: #3b82f6; border-color: #3b82f6; }
+        .align-btn.active .dot { background-color: white; }
+        .align-btn:disabled { background-color: #f1f5f9; border-color: #e2e8f0; cursor: not-allowed; }
+        .align-btn:disabled .dot { background-color: #cbd5e1; }
+        .dot { width: 6px; height: 6px; background-color: #cbd5e1; border-radius: 50%; transition: background-color 0.2s; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header will be injected here by layout.js -->
+
+    <!-- Main Content (React Root) -->
+    <main class="flex-grow p-4 md:p-8 flex flex-col items-center">
+        <div id="root" class="w-full max-w-[85rem]"></div>
+    </main>
+
+    <!-- Footer will be injected here by layout.js -->
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect, useMemo } = React;
+        const { PDFDocument, PageSizes } = PDFLib;
+
+        // --- Icons ---
+        const IconUpload = () => <i className="fa-solid fa-cloud-arrow-up text-4xl"></i>;
+        const IconImage = () => <i className="fa-regular fa-file-image"></i>;
+        const IconSettings = () => <i className="fa-solid fa-sliders"></i>;
+        const IconDownload = () => <i className="fa-solid fa-download"></i>;
+        const IconCheck = () => <i className="fa-solid fa-check"></i>;
+        const IconAlert = () => <i className="fa-solid fa-triangle-exclamation"></i>;
+        const IconTrash = () => <i className="fa-solid fa-trash-can"></i>;
+        const IconGrip = () => <i className="fa-solid fa-grip-vertical"></i>;
+
+        function App() {
+            // Data State
+            const [images, setImages] = useState([]); // { id, file, url, width, height }
+            const [isProcessing, setIsProcessing] = useState(false);
+            const [progress, setProgress] = useState("");
+            const fileInputRef = useRef(null);
+            const gridRef = useRef(null);
+
+            // Settings State
+            const [pageSize, setPageSize] = useState('a4'); // 'a4' | 'original'
+            const [orientation, setOrientation] = useState('portrait'); // 'portrait' | 'landscape'
+            const [margin, setMargin] = useState(20); // pixels (display unit, internal PDF points)
+            const [scaleMode, setScaleMode] = useState('fit'); // 'fit' (shrink to fit) | 'original' (clip/overflow)
+            
+            // Alignment State: -1 (Top/Left), 0 (Center), 1 (Bottom/Right)
+            const [alignX, setAlignX] = useState(0); 
+            const [alignY, setAlignY] = useState(0); 
+
+            // Initialize SortableJS
+            useEffect(() => {
+                if (gridRef.current && images.length > 0) {
+                    const sortable = new Sortable(gridRef.current, {
+                        animation: 150,
+                        handle: '.drag-handle',
+                        ghostClass: 'opacity-50',
+                        onEnd: (evt) => {
+                            const { oldIndex, newIndex } = evt;
+                            if (oldIndex === newIndex) return;
+                            
+                            setImages(prev => {
+                                const newList = [...prev];
+                                const [moved] = newList.splice(oldIndex, 1);
+                                newList.splice(newIndex, 0, moved);
+                                return newList;
+                            });
+                        }
+                    });
+                    return () => sortable.destroy();
+                }
+            }, [images.length]); 
+
+            const handleFileChange = async (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+
+                // Check for non-image files
+                const validFiles = files.filter(f => f.type === 'image/jpeg' || f.type === 'image/jpg' || f.type === 'image/png');
+                if (validFiles.length < files.length) {
+                    alert("目前僅支援 JPG 與 PNG 格式的圖片");
+                }
+
+                const newImages = [];
+                for (const file of validFiles) {
+                    const url = URL.createObjectURL(file);
+                    // Load image to get dimensions
+                    const dims = await new Promise(resolve => {
+                        const img = new Image();
+                        img.onload = () => resolve({ width: img.width, height: img.height });
+                        img.src = url;
+                    });
+
+                    newImages.push({
+                        id: Date.now() + Math.random().toString(36).substr(2, 9),
+                        file,
+                        url,
+                        width: dims.width,
+                        height: dims.height
+                    });
+                }
+
+                setImages(prev => [...prev, ...newImages]);
+                e.target.value = ''; // Reset input
+            };
+
+            const removeImage = (id) => {
+                setImages(prev => prev.filter(img => img.id !== id));
+            };
+
+            const getPageDimensions = (imgW, imgH) => {
+                if (pageSize === 'original') {
+                    // Page Size = Image Size + Margins * 2
+                    return { width: imgW + margin * 2, height: imgH + margin * 2 };
+                } else {
+                    // A4 standard points: 595.28 x 841.89
+                    const a4W = 595.28; 
+                    const a4H = 841.89;
+                    if (orientation === 'landscape') {
+                        return { width: a4H, height: a4W };
+                    }
+                    return { width: a4W, height: a4H };
+                }
+            };
+
+            const generatePDF = async () => {
+                if (images.length === 0) return;
+                setIsProcessing(true);
+                setProgress("正在初始化 PDF...");
+
+                try {
+                    const pdfDoc = await PDFDocument.create();
+
+                    for (let i = 0; i < images.length; i++) {
+                        const imgData = images[i];
+                        setProgress(`正在處理第 ${i + 1} / ${images.length} 頁...`);
+
+                        // 1. Embed Image
+                        let image;
+                        const arrayBuffer = await imgData.file.arrayBuffer();
+                        if (imgData.file.type === 'image/png') {
+                            image = await pdfDoc.embedPng(arrayBuffer);
+                        } else {
+                            image = await pdfDoc.embedJpg(arrayBuffer);
+                        }
+
+                        // 2. Determine Page Size
+                        const pageDims = getPageDimensions(image.width, image.height);
+                        const page = pdfDoc.addPage([pageDims.width, pageDims.height]);
+
+                        // 3. Calculate Draw Dimensions & Position
+                        const availableW = pageDims.width - (margin * 2);
+                        const availableH = pageDims.height - (margin * 2);
+
+                        let drawW = image.width;
+                        let drawH = image.height;
+
+                        // Scaling Logic
+                        if (pageSize === 'a4' && scaleMode === 'fit') {
+                            // Scale down if larger than available area
+                            const scaleW = availableW / image.width;
+                            const scaleH = availableH / image.height;
+                            const fitScale = Math.min(scaleW, scaleH);
+                            drawW = image.width * fitScale;
+                            drawH = image.height * fitScale;
+                        } 
+                        // If 'original' size, we don't scale
+
+                        // Alignment (X)
+                        let x = 0;
+                        if (pageSize === 'original') {
+                            x = margin; 
+                        } else {
+                            if (alignX === -1) x = margin;
+                            else if (alignX === 0) x = (pageDims.width - drawW) / 2;
+                            else x = pageDims.width - margin - drawW;
+                        }
+
+                        // Alignment (Y)
+                        let y = 0;
+                        if (pageSize === 'original') {
+                            y = margin;
+                        } else {
+                            if (alignY === -1) y = pageDims.height - margin - drawH; // Top
+                            else if (alignY === 0) y = (pageDims.height - drawH) / 2; // Center
+                            else y = margin; // Bottom
+                        }
+
+                        page.drawImage(image, { x, y, width: drawW, height: drawH });
+                    }
+
+                    setProgress("正在產生檔案...");
+                    const pdfBytes = await pdfDoc.save();
+                    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `images_to_pdf_${Date.now()}.pdf`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                } catch (err) {
+                    console.error(err);
+                    alert("發生錯誤: " + err.message);
+                } finally {
+                    setIsProcessing(false);
+                    setProgress("");
+                }
+            };
+
+            // Alignment Button Component
+            const AlignButton = ({ ax, ay, active, disabled }) => (
+                <button 
+                    onClick={() => { if(!disabled) { setAlignX(ax); setAlignY(ay); } }}
+                    disabled={disabled}
+                    className={`align-btn w-8 h-8 border border-slate-300 rounded flex items-center justify-center ${active && !disabled ? 'active' : 'bg-white'}`}
+                >
+                    <div className="dot"></div>
+                </button>
+            );
+
+            // Calculate Flexbox styles for the Preview "Page" Container
+            const getPreviewContainerStyle = (img, pageDims) => {
+                let justifyContent = 'center';
+                let alignItems = 'center';
+                let padding = '0';
+
+                if (pageSize === 'original') {
+                    // Original Size Mode: Image centered in margin
+                    const marginPercentX = (margin / pageDims.width) * 100;
+                    const marginPercentY = (margin / pageDims.height) * 100;
+                    padding = `${marginPercentY}% ${marginPercentX}%`;
+                } else {
+                    // A4 Mode: Use Alignment settings
+                    justifyContent = alignX === -1 ? 'flex-start' : (alignX === 0 ? 'center' : 'flex-end');
+                    alignItems = alignY === -1 ? 'flex-start' : (alignY === 0 ? 'center' : 'flex-end');
+                    
+                    // Convert margin points to CSS percentage relative to the page size
+                    const marginPercentX = (margin / pageDims.width) * 100;
+                    const marginPercentY = (margin / pageDims.height) * 100;
+                    padding = `${marginPercentY}% ${marginPercentX}%`;
+                }
+
+                return {
+                    display: 'flex',
+                    justifyContent,
+                    alignItems,
+                    padding,
+                    overflow: 'hidden'
+                };
+            };
+
+            // Calculate CSS styles for the Image itself
+            const getPreviewImageStyle = (img, pageDims) => {
+                if (pageSize === 'a4' && scaleMode === 'original') {
+                    // CRITICAL FIX: Original Size Simulation
+                    // Calculate image width as a percentage of the Content Box (Page - Margins)
+                    // If image is larger than content box, % will be > 100% and overflow will occur.
+                    
+                    const availableWidth = pageDims.width - (margin * 2);
+                    // Prevent division by zero if margin is huge
+                    const safeAvailableWidth = Math.max(availableWidth, 1); 
+                    
+                    const widthPercent = (img.width / safeAvailableWidth) * 100;
+
+                    return {
+                        width: `${widthPercent}%`,
+                        maxWidth: 'none',  // Allow overflow
+                        maxHeight: 'none', // Allow overflow
+                        flexShrink: 0      // Prevent flex from squishing it
+                    };
+                } else if (scaleMode === 'fit') {
+                    // Fit Mode: Standard contain behavior
+                    return {
+                        width: 'auto',
+                        height: 'auto',
+                        maxWidth: '100%',
+                        maxHeight: '100%'
+                    };
+                } else {
+                    // Original Page Size Mode (Page fits image)
+                    return {
+                        width: '100%',
+                        height: 'auto'
+                    };
+                }
+            };
+
+            const isOriginalMode = pageSize === 'original';
+
+            return (
+                <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[600px]">
+                    
+                    {/* Toolbar Header */}
+                    <div className="bg-white border-b border-gray-100 p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-800">
+                            <span className="text-orange-500"><IconImage /></span>
+                            JPG 轉 PDF 工具
+                        </h1>
+                        
+                        <div className="flex gap-2 w-full md:w-auto justify-end">
+                            <button 
+                                onClick={() => fileInputRef.current.click()}
+                                className="px-4 py-2 text-sm text-blue-600 border border-blue-200 bg-blue-50 hover:bg-blue-100 rounded-lg transition flex items-center gap-2"
+                            >
+                                <IconUpload /> <span className="hidden sm:inline">加入圖片</span>
+                            </button>
+                            <input 
+                                type="file" 
+                                multiple 
+                                accept="image/jpeg, image/png" 
+                                ref={fileInputRef} 
+                                className="hidden" 
+                                onChange={handleFileChange}
+                            />
+                            
+                            <button 
+                                onClick={generatePDF}
+                                disabled={images.length === 0 || isProcessing}
+                                className={`px-6 py-2 text-sm font-medium text-white rounded-lg shadow transition flex items-center gap-2 ${images.length === 0 || isProcessing ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            >
+                                {isProcessing ? (
+                                    <>
+                                        <div className="loader w-4 h-4 border-2"></div>
+                                        <span>處理中...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <IconDownload /> <span>下載 PDF</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Card Body */}
+                    <div className="p-4 md:p-8 flex-grow bg-slate-50/30 flex flex-col md:flex-row gap-6">
+                        
+                        {/* Left: Settings Panel */}
+                        <div className="w-full md:w-80 flex-shrink-0 space-y-6">
+                            
+                            {/* Page Settings */}
+                            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                                <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2"><IconSettings /> 版面設定</h3>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-600 mb-1.5">紙張大小</label>
+                                        <div className="flex bg-slate-100 rounded-lg p-1">
+                                            <button onClick={() => setPageSize('a4')} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${pageSize === 'a4' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>A4</button>
+                                            <button onClick={() => setPageSize('original')} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${pageSize === 'original' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>原圖尺寸</button>
+                                        </div>
+                                        {isOriginalMode && <p className="text-xs text-orange-500 mt-1">＊頁面尺寸將自動適應圖片大小</p>}
+                                    </div>
+
+                                    {pageSize === 'a4' && (
+                                        <div className="animate-fade-in">
+                                            <label className="block text-sm font-medium text-slate-600 mb-1.5">方向</label>
+                                            <div className="flex bg-slate-100 rounded-lg p-1">
+                                                <button onClick={() => setOrientation('portrait')} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${orientation === 'portrait' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>直向</button>
+                                                <button onClick={() => setOrientation('landscape')} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${orientation === 'landscape' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}>橫向</button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-600 mb-1.5 flex justify-between">
+                                            <span>邊距 (Margins)</span>
+                                            <span className="text-blue-600 font-bold">{margin} px</span>
+                                        </label>
+                                        <input type="range" min="0" max="100" value={margin} onChange={(e) => setMargin(Number(e.target.value))} className="w-full accent-blue-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Image Settings */}
+                            <div className={`bg-white p-5 rounded-xl border border-gray-200 shadow-sm transition-opacity ${isOriginalMode ? 'opacity-60 pointer-events-none' : ''}`}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="font-bold text-gray-700 flex items-center gap-2"><IconImage /> 圖片設定</h3>
+                                    {isOriginalMode && <span className="text-xs text-slate-400 border border-slate-200 px-2 py-0.5 rounded">原圖模式禁用</span>}
+                                </div>
+                                
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-600 mb-1.5">縮放模式</label>
+                                        <select disabled={isOriginalMode} value={scaleMode} onChange={(e) => setScaleMode(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-slate-50 disabled:text-slate-400">
+                                            <option value="fit">自動縮放 (Fit to Page)</option>
+                                            <option value="original">原始大小 (No Scale)</option>
+                                        </select>
+                                        <p className="text-xs text-slate-400 mt-1">
+                                            {scaleMode === 'fit' ? '圖片將自動縮小以符合版面與邊距' : '圖片保持原解析度，過大可能會被裁切'}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-600 mb-2">對齊方式</label>
+                                        <div className="grid grid-cols-3 gap-2 w-max mx-auto">
+                                            {/* Top Row (-1 Y) */}
+                                            <AlignButton ax={-1} ay={-1} active={alignX === -1 && alignY === -1} disabled={isOriginalMode} />
+                                            <AlignButton ax={0} ay={-1} active={alignX === 0 && alignY === -1} disabled={isOriginalMode} />
+                                            <AlignButton ax={1} ay={-1} active={alignX === 1 && alignY === -1} disabled={isOriginalMode} />
+                                            
+                                            {/* Center Row (0 Y) */}
+                                            <AlignButton ax={-1} ay={0} active={alignX === -1 && alignY === 0} disabled={isOriginalMode} />
+                                            <AlignButton ax={0} ay={0} active={alignX === 0 && alignY === 0} disabled={isOriginalMode} />
+                                            <AlignButton ax={1} ay={0} active={alignX === 1 && alignY === 0} disabled={isOriginalMode} />
+
+                                            {/* Bottom Row (1 Y) */}
+                                            <AlignButton ax={-1} ay={1} active={alignX === -1 && alignY === 1} disabled={isOriginalMode} />
+                                            <AlignButton ax={0} ay={1} active={alignX === 0 && alignY === 1} disabled={isOriginalMode} />
+                                            <AlignButton ax={1} ay={1} active={alignX === 1 && alignY === 1} disabled={isOriginalMode} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        {/* Right: Preview Grid */}
+                        <div className="flex-grow">
+                            {images.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl bg-white p-12 text-slate-400">
+                                    <IconImage className="text-4xl mb-4" />
+                                    <p>尚未加入任何圖片</p>
+                                    <button onClick={() => fileInputRef.current.click()} className="mt-4 text-blue-600 hover:underline">點擊上傳</button>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center text-sm text-slate-500 px-1">
+                                        <span>共 {images.length} 頁</span>
+                                        <span><i className="fa-solid fa-arrows-up-down-left-right mr-1"></i> 可拖曳調整順序</span>
+                                    </div>
+                                    
+                                    <div ref={gridRef} className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        {images.map((img, idx) => {
+                                            // Determine Dimensions for this specific item configuration
+                                            const pageDims = getPageDimensions(img.width, img.height);
+                                            
+                                            // 1. Container Style (Aspect Ratio, Flex Alignment, Padding for Margins)
+                                            let aspectRatioStyle = {};
+                                            if (pageSize === 'a4') {
+                                                aspectRatioStyle = { aspectRatio: orientation === 'portrait' ? '1 / 1.414' : '1.414 / 1' };
+                                            } else {
+                                                // Original mode: use image ratio
+                                                aspectRatioStyle = { aspectRatio: `${img.width} / ${img.height}` };
+                                            }
+                                            
+                                            const containerStyle = {
+                                                ...aspectRatioStyle,
+                                                ...getPreviewContainerStyle(img, pageDims)
+                                            };
+
+                                            // 2. Image Style (Size, Overflow behavior)
+                                            const imgStyle = getPreviewImageStyle(img, pageDims);
+
+                                            return (
+                                                <div key={img.id} className="relative group bg-slate-200 rounded-lg p-2 shadow-sm hover:shadow-md transition-shadow">
+                                                    {/* Page Container (White Paper) */}
+                                                    <div 
+                                                        className="bg-white w-full h-full shadow-inner relative overflow-hidden drag-handle cursor-grab active:cursor-grabbing"
+                                                        style={containerStyle}
+                                                    >
+                                                        {/* The Image */}
+                                                        <img 
+                                                            src={img.url} 
+                                                            className="shadow-sm"
+                                                            style={imgStyle}
+                                                        />
+                                                    </div>
+
+                                                    {/* Page Number Badge */}
+                                                    <div className="absolute top-3 left-3 bg-gray-800/70 text-white text-xs px-2 py-1 rounded font-mono pointer-events-none">
+                                                        {idx + 1}
+                                                    </div>
+
+                                                    {/* Controls Overlay */}
+                                                    <button 
+                                                        onClick={() => removeImage(img.id)}
+                                                        className="absolute top-3 right-3 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-sm"
+                                                        title="移除此頁"
+                                                    >
+                                                        <IconTrash />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
