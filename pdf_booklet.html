@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A4轉A6小冊子拼版工具 - PurePDF</title>
+    <title>小冊子拼版工具 - PurePDF</title>
     
     <!-- React & Babel -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -12,6 +12,17 @@
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Libraries -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- 引入共用佈局腳本 -->
+    <script src="layout.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -24,16 +35,6 @@
             }
         };
     </script>
-    
-    <!-- Libraries -->
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- 引入共用佈局腳本 -->
-    <script src="layout.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
@@ -48,7 +49,7 @@
 
     <!-- Header will be injected here by layout.js -->
 
-    <!-- Main Content (React Root) -->
+    <!-- Main Content -->
     <main class="flex-grow p-4 md:p-8 flex flex-col items-center">
         <div id="root" class="w-full max-w-[85rem]"></div>
     </main>
@@ -57,23 +58,22 @@
 
     <script type="text/babel">
         const { useState, useRef, useEffect, useMemo } = React;
-        const { PDFDocument, rgb, degrees, PageSizes, LineCapStyle } = PDFLib;
+        const { PDFDocument, rgb } = PDFLib;
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js';
 
         // --- Icons ---
-        const IconUpload = () => <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
-        const IconFileText = () => <i className="fa-regular fa-file-pdf text-4xl"></i>;
-        const IconBookOpen = () => <i className="fa-solid fa-book-open"></i>;
-        const IconImage = () => <i className="fa-regular fa-image"></i>;
-        const IconGrid = () => <i className="fa-solid fa-border-all"></i>;
-        const IconEye = () => <i className="fa-regular fa-eye"></i>;
-        const IconChevronDown = () => <i className="fa-solid fa-chevron-down"></i>;
-        const IconChevronUp = () => <i className="fa-solid fa-chevron-up"></i>;
-        const IconLayers = () => <i className="fa-solid fa-layer-group"></i>;
-        const IconAlertCircle = () => <i className="fa-solid fa-triangle-exclamation"></i>;
-        const IconCheckCircle2 = () => <i className="fa-solid fa-circle-check"></i>;
-        const IconDownload = () => <i className="fa-solid fa-download"></i>;
+        const IconUpload = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>;
+        const IconFileText = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>;
+        const IconBookOpen = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>;
+        const IconImage = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>;
+        const IconEye = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>;
+        const IconChevronDown = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m6 9 6 6 6-6"/></svg>;
+        const IconChevronUp = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m18 15-6-6-6 6"/></svg>;
+        const IconLayers = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>;
+        const IconAlertCircle = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
+        const IconCheckCircle2 = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>;
+        const IconDownload = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>;
         
         // Icons for Tutorial
         const IconScissors = ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="6" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><line x1="20" y1="4" x2="8.12" y2="15.88" /><line x1="14.47" y1="14.48" x2="20" y2="20" /><line x1="8.12" y1="8.12" x2="12" y2="12" /></svg>;
@@ -93,10 +93,14 @@
             const [downloadUrl, setDownloadUrl] = useState(null);
             const [error, setError] = useState(null);
             const [stats, setStats] = useState(null);
+            
+            // Settings
+            const [format, setFormat] = useState('a6'); // 'a6' (4-up cut&stack) | 'a5' (2-up booklet)
             const [binding, setBinding] = useState('left');
             const [quality, setQuality] = useState(2.5);
             const [drawGuides, setDrawGuides] = useState(true);
             const [showPreview, setShowPreview] = useState(true);
+            
             const fileInputRef = useRef(null);
 
             const handleFileChange = async (e) => {
@@ -110,8 +114,9 @@
             };
 
             const resetResult = () => { if (downloadUrl) { setDownloadUrl(null); setStats(null); setShowPreview(false); } };
-            const handleBindingChange = (newBinding) => { if (binding === newBinding) return; setBinding(newBinding); resetResult(); };
-            const handleQualityChange = (newQuality) => { if (quality === newQuality) return; setQuality(newQuality); resetResult(); };
+            const handleFormatChange = (v) => { if (format === v) return; setFormat(v); resetResult(); };
+            const handleBindingChange = (v) => { if (binding === v) return; setBinding(v); resetResult(); };
+            const handleQualityChange = (v) => { if (quality === v) return; setQuality(v); resetResult(); };
             const handleGuidesChange = () => { setDrawGuides(!drawGuides); resetResult(); };
 
             const analyzeFile = async (pdfFile) => {
@@ -123,49 +128,88 @@
                 } catch (err) { console.error("Preview analysis failed", err); }
             };
 
+            // Preview Logic
             useEffect(() => {
                 if (!cachedSrcPages) return;
                 const totalSrcPages = cachedSrcPages;
+                
                 let pagesNeeded = totalSrcPages;
                 while (pagesNeeded % 4 !== 0) { pagesNeeded++; }
-                const totalStrips = pagesNeeded / 4;
-                const sheetsCount = Math.ceil(totalStrips / 2);
-                const strips = [];
-                for (let i = 0; i < totalStrips; i++) {
-                    const p_last = pagesNeeded - (i * 2);
-                    const p_first = 1 + (i * 2);
-                    const p_second = 2 + (i * 2);
-                    const p_last_minus_1 = pagesNeeded - (i * 2) - 1;
-                    if (binding === 'left') { strips.push({ frontLeft: p_last, frontRight: p_first, backLeft: p_second, backRight: p_last_minus_1 }); }
-                    else { strips.push({ frontLeft: p_first, frontRight: p_last, backLeft: p_last_minus_1, backRight: p_second }); }
+                
+                let sheetsCount = 0;
+                let tableRows = [];
+
+                if (format === 'a6') {
+                    // A6 Cut & Stack Logic
+                    const totalStrips = pagesNeeded / 4;
+                    sheetsCount = Math.ceil(totalStrips / 2);
+                    
+                    const strips = [];
+                    for (let i = 0; i < totalStrips; i++) {
+                        const p_last = pagesNeeded - (i * 2);
+                        const p_first = 1 + (i * 2);
+                        const p_second = 2 + (i * 2);
+                        const p_last_minus_1 = pagesNeeded - (i * 2) - 1;
+                        if (binding === 'left') strips.push({ fl: p_last, fr: p_first, bl: p_second, br: p_last_minus_1 });
+                        else strips.push({ fl: p_first, fr: p_last, bl: p_last_minus_1, br: p_second });
+                    }
+
+                    for (let s = 0; s < sheetsCount; s++) {
+                        const topIdx = s;
+                        const btmIdx = s + sheetsCount;
+                        const tS = strips[topIdx];
+                        const bS = strips[btmIdx]; 
+                        
+                        tableRows.push({ 
+                            sheet: s + 1, side: 'FRONT', 
+                            left: { top: tS?.fl, bottom: bS?.fl }, 
+                            right: { top: tS?.fr, bottom: bS?.fr } 
+                        });
+                        tableRows.push({ 
+                            sheet: s + 1, side: 'BACK', 
+                            left: { top: tS?.bl, bottom: bS?.bl }, 
+                            right: { top: tS?.br, bottom: bS?.br } 
+                        });
+                    }
+                } else {
+                    // A5 Booklet Logic (2-up)
+                    sheetsCount = pagesNeeded / 4;
+                    for (let s = 0; s < sheetsCount; s++) {
+                        const p1 = 1 + (s * 2); const p2 = 2 + (s * 2);
+                        const pL = pagesNeeded - (s * 2); const pL_1 = pagesNeeded - (s * 2) - 1;
+
+                        if (binding === 'left') {
+                            tableRows.push({ sheet: s + 1, side: 'FRONT', left: { val: pL }, right: { val: p1 } });
+                            tableRows.push({ sheet: s + 1, side: 'BACK', left: { val: p2 }, right: { val: pL_1 } });
+                        } else {
+                            tableRows.push({ sheet: s + 1, side: 'FRONT', left: { val: p1 }, right: { val: pL } });
+                            tableRows.push({ sheet: s + 1, side: 'BACK', left: { val: pL_1 }, right: { val: p2 } });
+                        }
+                    }
                 }
-                const tableRows = [];
-                for (let s = 0; s < sheetsCount; s++) {
-                    const topIdx = s; const btmIdx = s + sheetsCount;
-                    const topStrip = strips[topIdx]; const btmStrip = strips[btmIdx];
-                    tableRows.push({ sheet: s + 1, side: 'FRONT', left: { top: topStrip?.frontLeft, bottom: btmStrip?.frontLeft }, right: { top: topStrip?.frontRight, bottom: btmStrip?.frontRight } });
-                    tableRows.push({ sheet: s + 1, side: 'BACK', left: { top: topStrip?.backLeft, bottom: btmStrip?.backLeft }, right: { top: topStrip?.backRight, bottom: btmStrip?.backRight } });
-                }
+
                 setPreviewInfo({ originalPages: totalSrcPages, finalPages: pagesNeeded, sheets: sheetsCount, rows: tableRows });
-            }, [cachedSrcPages, binding]);
+            }, [cachedSrcPages, binding, format]);
 
             const processPDF = async () => {
                 if (!file) return;
                 setDownloadUrl(null); setStats(null); setShowPreview(false); setIsProcessing(true); setError(null); setProgress("讀取檔案中...");
+                
                 try {
                     const fileArrayBuffer = await file.arrayBuffer();
                     const loadingTask = pdfjsLib.getDocument({ data: fileArrayBuffer });
                     const pdfDoc = await loadingTask.promise;
                     const totalSrcPages = pdfDoc.numPages;
+                    
                     let pagesNeeded = totalSrcPages;
                     while (pagesNeeded % 4 !== 0) { pagesNeeded++; }
-                    let totalStrips = pagesNeeded / 4;
-                    const sheetsCount = Math.ceil(totalStrips / 2);
                     const blankPagesCount = pagesNeeded - totalSrcPages;
+
                     const destPdf = await PDFDocument.create();
                     const embeddedImages = [];
+
                     for (let i = 1; i <= totalSrcPages; i++) {
-                        setProgress(`正在處理第 ${i} / ${totalSrcPages} 頁...`);
+                        setProgress(`處理中... 第 ${i} / ${totalSrcPages} 頁`);
                         const page = await pdfDoc.getPage(i);
                         const viewport = page.getViewport({ scale: quality });
                         const canvas = document.createElement('canvas'); const context = canvas.getContext('2d');
@@ -176,298 +220,320 @@
                         embeddedImages.push(embeddedImage);
                     }
                     const getImage = (idx) => (idx > totalSrcPages) ? null : embeddedImages[idx - 1];
-                    const strips = [];
-                    for (let i = 0; i < totalStrips; i++) {
-                        const p_last = pagesNeeded - (i * 2); const p_first = 1 + (i * 2); const p_second = 2 + (i * 2); const p_last_minus_1 = pagesNeeded - (i * 2) - 1;
-                        if (binding === 'left') { strips.push({ frontLeft: p_last, frontRight: p_first, backLeft: p_second, backRight: p_last_minus_1 }); }
-                        else { strips.push({ frontLeft: p_first, frontRight: p_last, backLeft: p_last_minus_1, backRight: p_second }); }
+
+                    if (format === 'a6') {
+                        const totalStrips = pagesNeeded / 4;
+                        const sheetsCount = Math.ceil(totalStrips / 2);
+                        const strips = [];
+                        for (let i = 0; i < totalStrips; i++) {
+                            const p_last = pagesNeeded - (i * 2); const p_first = 1 + (i * 2); 
+                            const p_second = 2 + (i * 2); const p_last_minus_1 = pagesNeeded - (i * 2) - 1;
+                            if (binding === 'left') strips.push({ fl: p_last, fr: p_first, bl: p_second, br: p_last_minus_1 });
+                            else strips.push({ fl: p_first, fr: p_last, bl: p_last_minus_1, br: p_second });
+                        }
+
+                        for (let s = 0; s < sheetsCount; s++) {
+                            const topStrip = strips[s]; const bottomStrip = strips[s + sheetsCount];
+                            
+                            // Front
+                            const pf = destPdf.addPage([A4_WIDTH, A4_HEIGHT]);
+                            if(topStrip) { await drawA6(pf, getImage(topStrip.fl), 'tl'); await drawA6(pf, getImage(topStrip.fr), 'tr'); }
+                            if(bottomStrip) { await drawA6(pf, getImage(bottomStrip.fl), 'bl'); await drawA6(pf, getImage(bottomStrip.fr), 'br'); }
+                            if(drawGuides) drawA6Guides(pf);
+
+                            // Back
+                            const pb = destPdf.addPage([A4_WIDTH, A4_HEIGHT]);
+                            if(topStrip) { await drawA6(pb, getImage(topStrip.bl), 'tl'); await drawA6(pb, getImage(topStrip.br), 'tr'); }
+                            if(bottomStrip) { await drawA6(pb, getImage(bottomStrip.bl), 'bl'); await drawA6(pb, getImage(bottomStrip.br), 'br'); }
+                            if(drawGuides) drawA6Guides(pb);
+                        }
+                    } 
+                    else {
+                        // A5 Booklet Logic
+                        const sheetsCount = pagesNeeded / 4;
+                        for (let s = 0; s < sheetsCount; s++) {
+                            const p1 = 1 + (s * 2); const p2 = 2 + (s * 2);
+                            const pL = pagesNeeded - (s * 2); const pL_1 = pagesNeeded - (s * 2) - 1;
+                            
+                            // Front: [Last, 1] (Left) or [1, Last] (Right)
+                            const pf = destPdf.addPage([A4_HEIGHT, A4_WIDTH]); // Landscape
+                            if (binding === 'left') { await drawA5(pf, getImage(pL), 'left'); await drawA5(pf, getImage(p1), 'right'); }
+                            else { await drawA5(pf, getImage(p1), 'left'); await drawA5(pf, getImage(pL), 'right'); }
+                            if(drawGuides) drawA5Guides(pf);
+
+                            // Back: [2, Last-1] (Left) or [Last-1, 2] (Right)
+                            const pb = destPdf.addPage([A4_HEIGHT, A4_WIDTH]); // Landscape
+                            // FIXED LOGIC: Draw on 'pb' (Page Back) instead of 'pf'
+                            if (binding === 'left') { await drawA5(pb, getImage(p2), 'left'); await drawA5(pb, getImage(pL_1), 'right'); }
+                            else { await drawA5(pb, getImage(pL_1), 'left'); await drawA5(pb, getImage(p2), 'right'); }
+                            if(drawGuides) drawA5Guides(pb);
+                        }
                     }
-                    setProgress("正在拼版...");
-                    for (let s = 0; s < sheetsCount; s++) {
-                        const topStrip = strips[s]; const bottomStrip = strips[s + sheetsCount];
-                        const pageFront = destPdf.addPage([A4_WIDTH, A4_HEIGHT]);
-                        if (topStrip) { await drawImageOnA4(pageFront, getImage(topStrip.frontLeft), 'top-left'); await drawImageOnA4(pageFront, getImage(topStrip.frontRight), 'top-right'); }
-                        if (bottomStrip) { await drawImageOnA4(pageFront, getImage(bottomStrip.frontLeft), 'bottom-left'); await drawImageOnA4(pageFront, getImage(bottomStrip.frontRight), 'bottom-right'); }
-                        if (drawGuides) drawCenterGuides(pageFront);
-                        const pageBack = destPdf.addPage([A4_WIDTH, A4_HEIGHT]);
-                        if (topStrip) { await drawImageOnA4(pageBack, getImage(topStrip.backLeft), 'top-left'); await drawImageOnA4(pageBack, getImage(topStrip.backRight), 'top-right'); }
-                        if (bottomStrip) { await drawImageOnA4(pageBack, getImage(bottomStrip.backLeft), 'bottom-left'); await drawImageOnA4(pageBack, getImage(bottomStrip.backRight), 'bottom-right'); }
-                        if (drawGuides) drawCenterGuides(pageBack);
-                        setProgress(`生成 A4 第 ${s + 1} / ${sheetsCount} 張...`);
-                    }
+
                     const pdfBytes = await destPdf.save();
                     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                     setDownloadUrl(URL.createObjectURL(blob));
-                    setStats({ originalPages: totalSrcPages, finalPages: pagesNeeded, sheets: sheetsCount, blanks: blankPagesCount });
+                    setStats({ originalPages: totalSrcPages, finalPages: pagesNeeded, sheets: destPdf.getPageCount() / 2, blanks: blankPagesCount });
+
                 } catch (err) { console.error(err); setError("轉換失敗：" + err.message); } finally { setIsProcessing(false); setProgress(""); }
             };
 
-            const drawImageOnA4 = async (destPage, srcImage, position) => {
-                if (!srcImage) return;
-                const { width: srcW, height: srcH } = srcImage;
+            const drawA6 = async (page, img, pos) => {
+                if(!img) return;
                 const targetW = A4_WIDTH / 2; const targetH = A4_HEIGHT / 2;
-                const scale = Math.min(targetW / srcW, targetH / srcH);
-                const drawW = srcW * scale; const drawH = srcH * scale;
+                const scale = Math.min(targetW / img.width, targetH / img.height);
+                const dw = img.width * scale; const dh = img.height * scale;
+                const dx = (targetW - dw)/2; const dy = (targetH - dh)/2;
                 let x = 0, y = 0;
-                const xOffset = (targetW - drawW) / 2; const yOffset = (targetH - drawH) / 2;
-                switch (position) {
-                    case 'top-left': x = xOffset; y = (A4_HEIGHT / 2) + yOffset; break;
-                    case 'top-right': x = (A4_WIDTH / 2) + xOffset; y = (A4_HEIGHT / 2) + yOffset; break;
-                    case 'bottom-left': x = xOffset; y = yOffset; break;
-                    case 'bottom-right': x = (A4_WIDTH / 2) + xOffset; y = yOffset; break;
-                }
-                destPage.drawImage(srcImage, { x, y, width: drawW, height: drawH });
+                if(pos === 'tl') { x = dx; y = targetH + dy; }
+                if(pos === 'tr') { x = targetW + dx; y = targetH + dy; }
+                if(pos === 'bl') { x = dx; y = dy; }
+                if(pos === 'br') { x = targetW + dx; y = dy; }
+                page.drawImage(img, { x, y, width: dw, height: dh });
             };
 
-            const drawCenterGuides = (page) => {
-                const centerX = A4_WIDTH / 2; const centerY = A4_HEIGHT / 2;
-                page.drawLine({ start: { x: 0, y: centerY }, end: { x: A4_WIDTH, y: centerY }, thickness: 0.2, color: rgb(0.5, 0.5, 0.5), dashArray: [5, 5] });
-                page.drawLine({ start: { x: centerX, y: 0 }, end: { x: centerX, y: A4_HEIGHT }, thickness: 0.2, color: rgb(0.5, 0.5, 0.5), dashArray: [5, 5] });
+            const drawA5 = async (page, img, side) => {
+                if(!img) return;
+                const pageW = A4_HEIGHT; const pageH = A4_WIDTH;
+                const targetW = pageW / 2; const targetH = pageH;
+                const scale = Math.min(targetW / img.width, targetH / img.height);
+                const dw = img.width * scale; const dh = img.height * scale;
+                const dx = (targetW - dw)/2; const dy = (targetH - dh)/2;
+                let x = (side === 'left') ? dx : targetW + dx;
+                let y = dy;
+                page.drawImage(img, { x, y, width: dw, height: dh });
             };
 
-            const getPageLabel = (pageNum) => (!pageNum || (cachedSrcPages && pageNum > cachedSrcPages)) ? '-' : pageNum;
+            const drawA6Guides = (page) => {
+                const cx = A4_WIDTH/2; const cy = A4_HEIGHT/2;
+                page.drawLine({ start: {x:0, y:cy}, end: {x:A4_WIDTH, y:cy}, thickness:0.2, color: rgb(0.5,0.5,0.5), dashArray:[5,5] });
+                page.drawLine({ start: {x:cx, y:0}, end: {x:cx, y:A4_HEIGHT}, thickness:0.2, color: rgb(0.5,0.5,0.5), dashArray:[5,5] });
+            };
+
+            const drawA5Guides = (page) => {
+                const cx = A4_HEIGHT / 2; const cy = A4_WIDTH;
+                page.drawLine({ start: {x:cx, y:0}, end: {x:cx, y:cy}, thickness:0.2, color: rgb(0.5,0.5,0.5), dashArray:[5,5] });
+            };
+
+            const getPageLabel = (p) => (!p || (cachedSrcPages && p > cachedSrcPages)) ? '-' : p;
 
             return (
                 <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[600px]">
                     
-                    {/* Toolbar Header */}
-                    <div className="bg-white border-b border-gray-100 p-4 md:p-6 flex items-center justify-between">
+                    <div className="bg-white border-b border-gray-100 p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
                         <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-800">
-                            <span className="text-green-600"><IconBookOpen /></span>
-                            A4 轉 A6 小冊子拼版工具
+                            <span className="text-green-600"><IconBookOpen className="w-8 h-8" /></span>
+                            小冊子拼版工具
                         </h1>
-                        <div className="text-sm text-gray-500 hidden md:block">
-                            影像重製模式・100% 容錯・切分堆疊法
+                        <div className="flex gap-2 bg-slate-100 rounded-lg p-1">
+                            <button onClick={() => handleFormatChange('a6')} className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${format === 'a6' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-500'}`}>A6 (切分)</button>
+                            <button onClick={() => handleFormatChange('a5')} className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${format === 'a5' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-500'}`}>A5 (騎馬釘)</button>
                         </div>
                     </div>
 
-                    {/* Content */}
                     <div className="p-4 md:p-8 flex-grow bg-slate-50/30">
                         <div className="max-w-5xl mx-auto h-full flex flex-col">
                             {!file ? (
-                                <div className="h-full flex flex-col items-center justify-center py-10 md:py-20">
-                                    <div 
-                                        onClick={() => fileInputRef.current.click()} 
-                                        className="border-2 border-dashed border-slate-300 rounded-xl p-12 flex flex-col items-center justify-center text-slate-500 hover:bg-blue-50 hover:border-blue-400 transition-all cursor-pointer max-w-xl w-full group bg-white"
-                                    >
-                                        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf" className="hidden" />
-                                        <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 mb-6 group-hover:scale-110 transition-transform">
-                                            <IconUpload />
-                                        </div>
-                                        <p className="text-xl font-bold text-slate-700 mb-2">點擊或拖放 PDF 檔案</p>
-                                        <p className="text-sm text-slate-400">支援 A4 / A5 直式檔案，本地端運算</p>
-                                    </div>
+                                <div className="h-full flex flex-col items-center justify-center py-20 border-2 border-dashed border-slate-300 rounded-xl bg-white hover:border-blue-400 cursor-pointer" onClick={() => fileInputRef.current.click()}>
+                                    <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf" className="hidden" />
+                                    <div className="text-blue-500 mb-4"><IconUpload className="w-12 h-12" /></div>
+                                    <p className="text-xl font-bold text-slate-700">上傳 PDF 檔案</p>
+                                    <p className="text-sm text-slate-400 mt-2">支援 A4/A5 來源，本地運算</p>
                                 </div>
                             ) : (
-                                <div className="space-y-6 animate-fade-in w-full">
-                                    
-                                    {/* File Info Bar */}
-                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm gap-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="bg-red-100 text-red-600 w-12 h-12 rounded-lg text-2xl flex items-center justify-center flex-shrink-0">
-                                                <IconFileText />
-                                            </div>
+                                <div className="space-y-6 animate-fade-in">
+                                    <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                                        <div className="flex items-center gap-3">
+                                            <IconFileText className="w-8 h-8 text-red-500" />
                                             <div>
-                                                <h3 className="font-bold text-slate-700 text-lg">{file.name}</h3>
-                                                <p className="text-sm text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                                <h3 className="font-bold text-gray-800">{file.name}</h3>
+                                                <p className="text-sm text-gray-500">{(file.size/1024/1024).toFixed(2)} MB</p>
                                             </div>
                                         </div>
-                                        <button 
-                                            onClick={() => { setFile(null); setDownloadUrl(null); }} 
-                                            className="px-4 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg font-medium transition-colors w-full md:w-auto"
-                                        >
-                                            更換檔案
-                                        </button>
+                                        <button onClick={()=>{setFile(null); setDownloadUrl(null);}} className="text-red-500 hover:text-red-700 text-sm font-medium">更換檔案</button>
                                     </div>
 
-                                    {/* Settings */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm h-full">
-                                            <div className="flex items-center gap-2 mb-4 text-slate-800 font-bold border-b border-slate-100 pb-3">
-                                                <span className="text-blue-600"><IconBookOpen /></span> 裝訂方向
-                                            </div>
+                                        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                                            <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2"><IconBookOpen className="w-5 h-5" /> 設定</h3>
                                             <div className="space-y-4">
-                                                <label className={`relative flex items-start p-3 border rounded-lg cursor-pointer transition-all ${binding === 'left' ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300'}`}>
-                                                    <input type="radio" name="binding" value="left" checked={binding === 'left'} onChange={() => handleBindingChange('left')} className="mt-1 w-4 h-4 text-blue-600" />
-                                                    <div className="ml-3">
-                                                        <span className="block text-sm font-bold text-slate-800">左翻書 (Left)</span>
-                                                        <span className="block text-xs text-slate-500 mt-1">橫排書適用。正面：[封底 | 封面]</span>
+                                                <div>
+                                                    <label className="text-sm font-medium text-gray-600 block mb-2">裝訂方向</label>
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <label className={`border p-3 rounded-lg cursor-pointer flex items-center gap-2 ${binding==='left'?'border-green-500 bg-green-50':''}`}>
+                                                            <input type="radio" name="binding" value="left" checked={binding==='left'} onChange={()=>handleBindingChange('left')} className="text-green-600"/>
+                                                            <span className="text-sm">左翻 (Left)</span>
+                                                        </label>
+                                                        <label className={`border p-3 rounded-lg cursor-pointer flex items-center gap-2 ${binding==='right'?'border-green-500 bg-green-50':''}`}>
+                                                            <input type="radio" name="binding" value="right" checked={binding==='right'} onChange={()=>handleBindingChange('right')} className="text-green-600"/>
+                                                            <span className="text-sm">右翻 (Right)</span>
+                                                        </label>
                                                     </div>
+                                                </div>
+                                                <div>
+                                                    <label className="text-sm font-medium text-gray-600 block mb-2">品質</label>
+                                                    <select value={quality} onChange={(e)=>handleQualityChange(Number(e.target.value))} className="w-full border p-2 rounded-lg bg-white text-sm">
+                                                        <option value="2.5">標準 (~180 DPI)</option>
+                                                        <option value="4.17">印刷 (~300 DPI)</option>
+                                                    </select>
+                                                </div>
+                                                <label className="flex items-center gap-2 cursor-pointer pt-2">
+                                                    <input type="checkbox" checked={drawGuides} onChange={handleGuidesChange} className="text-green-600 rounded"/>
+                                                    <span className="text-sm text-gray-700">繪製裁切/對折參考線</span>
                                                 </label>
-                                                <label className={`relative flex items-start p-3 border rounded-lg cursor-pointer transition-all ${binding === 'right' ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300'}`}>
-                                                    <input type="radio" name="binding" value="right" checked={binding === 'right'} onChange={() => handleBindingChange('right')} className="mt-1 w-4 h-4 text-blue-600" />
-                                                    <div className="ml-3">
-                                                        <span className="block text-sm font-bold text-slate-800">右翻書 (Right)</span>
-                                                        <span className="block text-xs text-slate-500 mt-1">直排書適用。正面：[封面 | 封底]</span>
+                                            </div>
+                                        </div>
+
+                                        {previewInfo && !isProcessing && (
+                                            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                                <div className="flex justify-between items-center mb-4 cursor-pointer" onClick={()=>setShowPreview(!showPreview)}>
+                                                    <h3 className="font-bold text-gray-700 flex items-center gap-2"><IconEye className="w-5 h-5" /> 預覽結構</h3>
+                                                    <span className="text-xs text-gray-400">{showPreview?'收起':'展開'}</span>
+                                                </div>
+                                                {showPreview && (
+                                                    <div className="overflow-x-auto max-h-60">
+                                                        <table className="w-full text-xs text-left text-gray-600">
+                                                            <thead className="bg-gray-50 text-gray-700 font-bold">
+                                                                <tr><th className="p-2">Sheet</th><th className="p-2">Side</th><th className="p-2">L</th><th className="p-2">R</th></tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {previewInfo.rows.map((row, i) => (
+                                                                    <tr key={i} className="border-b border-gray-100">
+                                                                        <td className="p-2">{row.sheet}</td>
+                                                                        <td className={`p-2 font-bold ${row.side==='FRONT'?'text-blue-500':'text-orange-500'}`}>{row.side}</td>
+                                                                        {format === 'a6' ? (
+                                                                            <>
+                                                                                <td className="p-2">
+                                                                                    <div>T: {getPageLabel(row.left.top)}</div>
+                                                                                    <div>B: {getPageLabel(row.left.bottom)}</div>
+                                                                                </td>
+                                                                                <td className="p-2">
+                                                                                    <div>T: {getPageLabel(row.right.top)}</div>
+                                                                                    <div>B: {getPageLabel(row.right.bottom)}</div>
+                                                                                </td>
+                                                                            </>
+                                                                        ) : (
+                                                                            <>
+                                                                                <td className="p-2 font-mono text-sm">{getPageLabel(row.left.val)}</td>
+                                                                                <td className="p-2 font-mono text-sm">{getPageLabel(row.right.val)}</td>
+                                                                            </>
+                                                                        )}
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
                                                     </div>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm h-full">
-                                            <div className="flex items-center gap-2 mb-4 text-slate-800 font-bold border-b border-slate-100 pb-3">
-                                                <span className="text-blue-600"><IconImage /></span> 輸出設定
-                                            </div>
-                                            <div className="space-y-4">
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <label className={`relative flex flex-col items-center p-3 border rounded-lg cursor-pointer transition-all ${quality === 2.5 ? 'border-blue-500 bg-blue-50/50' : 'border-slate-200 hover:border-slate-300'}`}>
-                                                        <input type="radio" name="quality" value="2.5" checked={quality === 2.5} onChange={() => handleQualityChange(2.5)} className="sr-only" />
-                                                        <span className="text-sm font-bold text-slate-800">標準 (~180 DPI)</span>
-                                                        <span className="text-xs text-slate-500">速度快</span>
-                                                    </label>
-                                                    <label className={`relative flex flex-col items-center p-3 border rounded-lg cursor-pointer transition-all ${quality === 4.17 ? 'border-blue-500 bg-blue-50/50' : 'border-slate-200 hover:border-slate-300'}`}>
-                                                        <input type="radio" name="quality" value="4.17" checked={quality === 4.17} onChange={() => handleQualityChange(4.17)} className="sr-only" />
-                                                        <span className="text-sm font-bold text-slate-800">印刷 (~300 DPI)</span>
-                                                        <span className="text-xs text-slate-500">高畫質</span>
-                                                    </label>
-                                                </div>
-                                                <div className="pt-2 border-t border-slate-100">
-                                                    <label className="flex items-center gap-3 cursor-pointer">
-                                                        <input type="checkbox" checked={drawGuides} onChange={handleGuidesChange} className="w-4 h-4 text-blue-600 rounded" />
-                                                        <span className="text-sm text-slate-700">繪製裁切與對折參考線</span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Preview Info */}
-                                    {previewInfo && !isProcessing && (
-                                        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                                            <div className="px-6 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition" onClick={() => setShowPreview(!showPreview)}>
-                                                <h3 className="font-bold text-slate-700 flex items-center gap-2"><IconEye /> 拼版預覽</h3>
-                                                <div className="flex items-center gap-2 text-sm text-slate-500">
-                                                    <span>原稿 {previewInfo.originalPages} 頁 ➔ {previewInfo.sheets} 張 A4</span>
-                                                    {showPreview ? <IconChevronUp /> : <IconChevronDown />}
-                                                </div>
-                                            </div>
-                                            {showPreview && (
-                                                <div className="overflow-x-auto">
-                                                    <table className="w-full text-sm text-left text-slate-600">
-                                                        <thead className="text-xs text-slate-700 uppercase bg-slate-100 border-b border-slate-200">
-                                                            <tr>
-                                                                <th className="px-4 py-2 text-center w-16">Sheet</th>
-                                                                <th className="px-4 py-2 text-center w-20">Side</th>
-                                                                <th className="px-4 py-2 text-center">Left</th>
-                                                                <th className="px-4 py-2 text-center">Right</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {previewInfo.rows.map((row, idx) => (
-                                                                <tr key={idx} className={`border-b border-slate-100 ${idx % 2 === 0 ? 'bg-slate-50/30' : 'bg-white'}`}>
-                                                                    {idx % 2 === 0 && <td rowSpan={2} className="px-4 py-2 text-center font-bold border-r border-slate-200 bg-white">{row.sheet}</td>}
-                                                                    <td className={`px-4 py-2 text-center font-medium text-xs ${row.side === 'FRONT' ? 'text-blue-600' : 'text-orange-500'}`}>{row.side}</td>
-                                                                    <td className="px-4 py-2 text-center"><span className="text-xs text-slate-400">上</span> {getPageLabel(row.left.top)} <span className="text-slate-300">|</span> <span className="text-xs text-slate-400">下</span> {getPageLabel(row.left.bottom)}</td>
-                                                                    <td className="px-4 py-2 text-center"><span className="text-xs text-slate-400">上</span> {getPageLabel(row.right.top)} <span className="text-slate-300">|</span> <span className="text-xs text-slate-400">下</span> {getPageLabel(row.right.bottom)}</td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Action Area */}
-                                    <div className="flex flex-col items-center justify-center pt-2 pb-6">
-                                        {error && <div className="mb-4 text-red-600 bg-red-50 border border-red-100 px-4 py-3 rounded-lg flex items-center gap-2"><IconAlertCircle /> {error}</div>}
-                                        
-                                        {!downloadUrl ? (
-                                            <button 
-                                                onClick={processPDF} 
-                                                disabled={isProcessing} 
-                                                className={`
-                                                    px-10 py-3.5 rounded-xl text-white font-bold shadow-lg shadow-blue-200 flex items-center gap-3 text-lg transition-all transform
-                                                    ${isProcessing ? 'bg-slate-400 cursor-not-allowed shadow-none' : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 hover:-translate-y-1'}
-                                                `}
-                                            >
-                                                {isProcessing ? <><div className="loader"></div><span>{progress}</span></> : <><IconLayers /> 開始轉換</>}
-                                            </button>
-                                        ) : (
-                                            <div className="w-full bg-green-50 border border-green-200 rounded-xl p-8 flex flex-col items-center animate-fade-in shadow-sm">
-                                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-4 text-3xl"><IconCheckCircle2 /></div>
-                                                <h3 className="text-2xl font-bold text-green-800 mb-1">轉換成功！</h3>
-                                                <p className="text-green-600 mb-6">產出 {stats.sheets} 張 A4 紙張，共 {stats.sheets * 2} 面</p>
-                                                <a 
-                                                    href={downloadUrl} 
-                                                    download={`A6_Booklet_${file.name}`} 
-                                                    className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-200 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5"
-                                                >
-                                                    <IconDownload /> 下載檔案
-                                                </a>
-                                                
-                                                {/* Instructions Diagram */}
-                                                <div className="border-t border-green-200 pt-4 mt-8 w-full">
-                                                    <h4 className="font-bold text-gray-700 mb-4 flex items-center gap-2 justify-center">
-                                                        <IconScissors className="w-4 h-4" />
-                                                        製作教學：切分堆疊法 (Cut & Stack)
-                                                    </h4>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                                                        {/* Step 1 */}
-                                                        <div className="bg-white p-4 rounded border border-gray-200">
-                                                            <strong className="block text-gray-800 mb-2 text-sm">1. 雙面列印</strong>
-                                                            <div className="h-24 bg-gray-50 border border-gray-100 mb-2 flex items-center justify-center">
-                                                                <div className="w-12 h-16 bg-white border border-gray-300 flex items-center justify-center shadow-sm relative">
-                                                                    <div className="text-[8px] text-gray-300">A4</div>
-                                                                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-gray-100 border-l border-t border-gray-200"></div>
-                                                                </div>
-                                                            </div>
-                                                            <p className="text-sm text-gray-500">使用 A4 紙進行雙面列印，並選擇長邊翻頁設定。</p>
-                                                        </div>
-
-                                                        {/* Step 2 */}
-                                                        <div className="bg-white p-4 rounded border border-gray-200">
-                                                            <strong className="block text-gray-800 mb-2 text-sm">2. 水平裁切</strong>
-                                                            <div className="relative h-24 bg-gray-50 border border-gray-100 mb-2 flex items-center justify-center px-8 py-2">
-                                                                <div className="w-24 h-full bg-white border border-gray-300 flex flex-col relative shadow-sm">
-                                                                    <div className="flex-1 flex items-center justify-center text-[10px] text-gray-400">
-                                                                        上半部
-                                                                    </div>
-                                                                    <div className="w-full border-b border-dashed border-red-400"></div>
-                                                                    <div className="flex-1 flex items-center justify-center text-[10px] text-gray-400">
-                                                                        下半部
-                                                                    </div>
-                                                                    <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-red-500">
-                                                                        <IconScissors className="w-4 h-4" />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <p className="text-sm text-gray-500">將整疊紙從中間水平切開。</p>
-                                                        </div>
-
-                                                        {/* Step 3 */}
-                                                        <div className="bg-white p-4 rounded border border-gray-200">
-                                                            <strong className="block text-gray-800 mb-2 text-sm">3. 堆疊對折</strong>
-                                                            <div className="flex items-center justify-around h-24 bg-gray-50 mb-2 px-4">
-                                                                <div className="flex flex-col items-center">
-                                                                    <div className="w-8 h-6 bg-white border border-gray-400 shadow-sm text-[8px] flex items-center justify-center">上</div>
-                                                                    <IconArrowDown className="w-3 h-3 text-gray-400 my-1" />
-                                                                    <div className="w-8 h-6 bg-gray-200 border border-gray-400 text-[8px] flex items-center justify-center">下</div>
-                                                                </div>
-                                                                <div className="text-gray-300 text-lg">➔</div>
-                                                                <IconFoldAction className="w-10 h-10 text-blue-500" />
-                                                            </div>
-                                                            <p className="text-sm text-gray-500">
-                                                                將裁切好的「上半疊」疊在「下半疊」上方。<br />
-                                                                <span className="text-xs text-red-400">(若最下方有空白頁請取出)</span><br />
-                                                                接著整疊紙沿中線對折。
-                                                            </p>
-                                                        </div>
-
-                                                        {/* Step 4 */}
-                                                        <div className="bg-white p-4 rounded border border-gray-200">
-                                                            <strong className="block text-gray-800 mb-2 text-sm">4. 裝訂</strong>
-                                                            <div className="h-24 bg-gray-50 border border-gray-100 mb-2 flex items-center justify-center">
-                                                                <IconStaple className="w-12 h-12 text-gray-600" />
-                                                            </div>
-                                                            <p className="text-sm text-gray-500">使用釘書機或長尾夾，固定於中線處裝訂即完成。</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
 
+                                    <div className="flex flex-col items-center pt-4">
+                                        {error && <div className="text-red-500 mb-4 flex items-center gap-2"><IconAlertCircle className="w-5 h-5" /> {error}</div>}
+                                        {!downloadUrl ? (
+                                            <button onClick={processPDF} disabled={isProcessing} className={`px-10 py-3 rounded-xl text-white font-bold shadow-lg flex items-center gap-2 transition-all ${isProcessing?'bg-gray-400':'bg-green-600 hover:bg-green-700 hover:scale-105'}`}>
+                                                {isProcessing ? <><div className="loader w-4 h-4 border-2"></div> 處理中...</> : <><IconLayers className="w-5 h-5" /> 開始轉換</>}
+                                            </button>
+                                        ) : (
+                                            <div className="w-full bg-green-50 border border-green-200 rounded-xl p-8 flex flex-col items-center animate-fade-in shadow-sm">
+                                                <div className="text-green-600 text-4xl mb-4"><IconCheckCircle2 className="w-12 h-12" /></div>
+                                                <h3 className="text-2xl font-bold text-green-800 mb-2">完成！</h3>
+                                                <p className="text-green-700 mb-6">產出 {stats.sheets} 張 {format==='a6'?'A4':'A4 (橫)'}</p>
+                                                <a href={downloadUrl} download={`Booklet_${file.name}`} className="px-8 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 flex items-center gap-2 shadow-lg"><IconDownload className="w-5 h-5" /> 下載 PDF</a>
+                                                
+                                                {/* Tutorial Area - Restored Original Style */}
+                                                <div className="mt-8 pt-6 border-t border-green-200 w-full">
+                                                    <h4 className="font-bold text-gray-700 mb-4 text-center flex items-center justify-center gap-2">
+                                                        <IconScissors className="w-5 h-5" /> {format === 'a6' ? 'A6 切分堆疊法教學' : 'A5 騎馬釘教學'}
+                                                    </h4>
+                                                    
+                                                    {format === 'a6' ? (
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                                                            {/* Step 1 */}
+                                                            <div className="bg-white p-4 rounded border border-gray-200">
+                                                                <strong className="block text-gray-800 mb-2 text-sm">1. 雙面列印</strong>
+                                                                <div className="h-24 bg-gray-50 border border-gray-100 mb-2 flex items-center justify-center">
+                                                                    <div className="w-12 h-16 bg-white border border-gray-300 flex items-center justify-center shadow-sm relative">
+                                                                        <div className="text-[8px] text-gray-300">A4</div>
+                                                                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-gray-100 border-l border-t border-gray-200"></div>
+                                                                    </div>
+                                                                </div>
+                                                                <p className="text-sm text-gray-500">使用 A4 紙進行雙面列印，並選擇長邊翻頁設定。</p>
+                                                            </div>
+
+                                                            {/* Step 2 */}
+                                                            <div className="bg-white p-4 rounded border border-gray-200">
+                                                                <strong className="block text-gray-800 mb-2 text-sm">2. 水平裁切</strong>
+                                                                <div className="relative h-24 bg-gray-50 border border-gray-100 mb-2 flex items-center justify-center px-8 py-2">
+                                                                    <div className="w-24 h-full bg-white border border-gray-300 flex flex-col relative shadow-sm">
+                                                                        <div className="flex-1 flex items-center justify-center text-[10px] text-gray-400">
+                                                                            上半部
+                                                                        </div>
+                                                                        <div className="w-full border-b border-dashed border-red-400"></div>
+                                                                        <div className="flex-1 flex items-center justify-center text-[10px] text-gray-400">
+                                                                            下半部
+                                                                        </div>
+                                                                        <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-red-500">
+                                                                            <IconScissors className="w-4 h-4" />
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <p className="text-sm text-gray-500">將整疊紙從中間水平切開。</p>
+                                                            </div>
+
+                                                            {/* Step 3 */}
+                                                            <div className="bg-white p-4 rounded border border-gray-200">
+                                                                <strong className="block text-gray-800 mb-2 text-sm">3. 堆疊對折</strong>
+                                                                <div className="flex items-center justify-around h-24 bg-gray-50 mb-2 px-4">
+                                                                    <div className="flex flex-col items-center">
+                                                                        <div className="w-8 h-6 bg-white border border-gray-400 shadow-sm text-[8px] flex items-center justify-center">上</div>
+                                                                        <IconArrowDown className="w-3 h-3 text-gray-400 my-1" />
+                                                                        <div className="w-8 h-6 bg-gray-200 border border-gray-400 text-[8px] flex items-center justify-center">下</div>
+                                                                    </div>
+                                                                    <div className="text-gray-300 text-lg">➔</div>
+                                                                    <IconFoldAction className="w-10 h-10 text-blue-500" />
+                                                                </div>
+                                                                <p className="text-sm text-gray-500">
+                                                                    將裁切好的「上半疊」（包含封面）直接疊放在「下半疊」的上方。<br />
+                                                                    <span className="text-xs text-red-400">(若最下方有空白紙張請取出)</span><br />
+                                                                    接著將整疊紙張先沿著左右兩半的中央虛線對折 (封面朝外)。
+                                                                </p>
+                                                            </div>
+
+                                                            {/* Step 4 */}
+                                                            <div className="bg-white p-4 rounded border border-gray-200">
+                                                                <strong className="block text-gray-800 mb-2 text-sm">4. 裝訂</strong>
+                                                                <div className="h-24 bg-gray-50 border border-gray-100 mb-2 flex items-center justify-center">
+                                                                    <IconStaple className="w-12 h-12 text-gray-600" />
+                                                                </div>
+                                                                <p className="text-sm text-gray-500">使用釘書機或長尾夾，固定於中線處裝訂即完成。</p>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                                                            <div className="bg-white p-4 rounded border border-gray-200">
+                                                                <strong className="block text-gray-800 mb-2 text-sm">1. 雙面列印</strong>
+                                                                <div className="h-24 bg-gray-50 border border-gray-100 mb-2 flex items-center justify-center">
+                                                                    <div className="w-16 h-12 bg-white border border-gray-300 flex items-center justify-center shadow-sm relative">
+                                                                        <div className="text-[8px] text-gray-300">A4 (橫)</div>
+                                                                        <div className="absolute top-0 right-0 w-3 h-full border-l border-dashed border-gray-300"></div>
+                                                                    </div>
+                                                                </div>
+                                                                <p className="text-sm text-gray-500">使用 A4 紙張進行雙面列印 (短邊翻頁/Short-Edge Binding)。</p>
+                                                            </div>
+                                                            <div className="bg-white p-4 rounded border border-gray-200">
+                                                                <strong className="block text-gray-800 mb-2 text-sm">2. 對折裝訂</strong>
+                                                                <div className="h-24 bg-gray-50 border border-gray-100 mb-2 flex items-center justify-center">
+                                                                    <IconStaple className="w-12 h-12 text-gray-600" />
+                                                                </div>
+                                                                <p className="text-sm text-gray-500">將整疊紙沿中間對折，在折線處使用釘書機裝訂。</p>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>
