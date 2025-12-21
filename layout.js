@@ -30,19 +30,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 4. 設定導航列 Active 狀態 (高亮當前頁面)
     const currentPath = window.location.pathname;
-    const navLinks = document.querySelectorAll('.nav-link');
+    // 同時選取桌面版 (.nav-link) 與 手機版 (.nav-link-mobile) 的連結
+    const navLinks = document.querySelectorAll('.nav-link, .nav-link-mobile');
 
-    // 判斷當前頁面以設定 Active 狀態 (包含 index.html 和其他工具頁面)
-    // 這裡我們手動定義頁面與 href 的對應，確保精確
     const pageMap = {
         'pdf_reorder.html': 'pdf_reorder.html',
         'pdf_to_jpg.html': 'pdf_to_jpg.html',
+        'jpg_to_pdf.html': 'jpg_to_pdf.html',
         'pdf_booklet.html': 'pdf_booklet.html',
-        'jpg_to_pdf.html': 'jpg_to_pdf.html', // 新增
         'about.html': 'about.html'
     };
 
-    // 找出當前對應的 key
     let activeHref = '';
     for (const [page, href] of Object.entries(pageMap)) {
         if (currentPath.includes(page)) {
@@ -54,8 +52,44 @@ document.addEventListener("DOMContentLoaded", async () => {
     navLinks.forEach(link => {
         const linkHref = link.getAttribute('href');
         if (linkHref === activeHref) {
-            link.classList.add('text-blue-600');
-            link.classList.remove('text-gray-600');
+            // 根據不同 class 給予不同的 active 樣式
+            if (link.classList.contains('nav-link')) {
+                link.classList.add('text-blue-600');
+                link.classList.remove('text-gray-600');
+            } else if (link.classList.contains('nav-link-mobile')) {
+                link.classList.add('bg-blue-50', 'text-blue-600');
+            }
         }
     });
+
+    // 5. 手機版選單互動邏輯
+    const mobileBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    if (mobileBtn && mobileMenu) {
+        mobileBtn.addEventListener('click', () => {
+            // 切換選單顯示
+            mobileMenu.classList.toggle('hidden');
+            
+            // 切換圖示 (三條線 <-> X)
+            const icon = mobileBtn.querySelector('i');
+            if (mobileMenu.classList.contains('hidden')) {
+                icon.classList.remove('fa-xmark');
+                icon.classList.add('fa-bars');
+            } else {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-xmark');
+            }
+        });
+
+        // 點擊選單項目後自動關閉選單 (優化體驗)
+        mobileMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+                const icon = mobileBtn.querySelector('i');
+                icon.classList.remove('fa-xmark');
+                icon.classList.add('fa-bars');
+            });
+        });
+    }
 });

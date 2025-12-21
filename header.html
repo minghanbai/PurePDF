@@ -1,14 +1,40 @@
 <nav class="bg-white shadow-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+        <!-- Logo -->
         <a href="index.html" class="flex items-center gap-2 group">
             <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white font-bold text-lg group-hover:bg-blue-700 transition">P</div>
             <span class="text-xl font-bold text-gray-800 tracking-tight">PurePDF</span>
         </a>
-        <div class="flex gap-4 text-sm font-medium text-gray-600 overflow-x-auto no-scrollbar">
-            <a href="pdf_reorder.html" class="nav-link flex-shrink-0 transition hover:text-blue-600">合併重組</a>
-            <a href="pdf_to_jpg.html" class="nav-link flex-shrink-0 transition hover:text-blue-600">PDF 轉 JPG</a>
-            <a href="jpg_to_pdf.html" class="nav-link flex-shrink-0 transition hover:text-blue-600">JPG 轉 PDF</a>
-            <a href="pdf_booklet.html" class="nav-link flex-shrink-0 transition hover:text-blue-600">小冊子拼版</a>
+
+        <!-- Desktop Menu (電腦版顯示，手機版隱藏) -->
+        <div class="hidden md:flex gap-6 text-sm font-medium text-gray-600">
+            <a href="pdf_reorder.html" class="nav-link hover:text-blue-600 transition">合併重組</a>
+            <a href="pdf_to_jpg.html" class="nav-link hover:text-blue-600 transition">PDF 轉 JPG</a>
+            <a href="jpg_to_pdf.html" class="nav-link hover:text-blue-600 transition">JPG 轉 PDF</a>
+            <a href="pdf_booklet.html" class="nav-link hover:text-blue-600 transition">小冊子拼版</a>
+        </div>
+
+        <!-- Mobile Menu Button (手機版顯示) -->
+        <button id="mobile-menu-btn" class="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition focus:outline-none" aria-label="Toggle menu">
+            <i class="fa-solid fa-bars text-xl"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Menu Dropdown (預設隱藏) -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full left-0 top-full">
+        <div class="flex flex-col p-4 space-y-2 text-sm font-medium text-gray-600">
+            <a href="pdf_reorder.html" class="nav-link-mobile block px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition">
+                <i class="fa-solid fa-layer-group w-6 text-center mr-2"></i>合併重組
+            </a>
+            <a href="pdf_to_jpg.html" class="nav-link-mobile block px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition">
+                <i class="fa-regular fa-image w-6 text-center mr-2"></i>PDF 轉 JPG
+            </a>
+            <a href="jpg_to_pdf.html" class="nav-link-mobile block px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition">
+                <i class="fa-regular fa-file-image w-6 text-center mr-2"></i>JPG 轉 PDF
+            </a>
+            <a href="pdf_booklet.html" class="nav-link-mobile block px-4 py-3 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition">
+                <i class="fa-solid fa-book-open w-6 text-center mr-2"></i>小冊子拼版
+            </a>
         </div>
     </div>
 </nav>
