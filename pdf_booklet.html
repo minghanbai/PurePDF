@@ -109,7 +109,7 @@
                     setFile(selectedFile); setDownloadUrl(null); setError(null); setStats(null); setPreviewInfo(null); setCachedSrcPages(null); setShowPreview(true);
                     await analyzeFile(selectedFile);
                 } else {
-                    setError("請上傳有效的 PDF 檔案");
+                    setError("請載入有效的 PDF 檔案");
                 }
             };
 
@@ -337,7 +337,7 @@
                                 <div className="h-full flex flex-col items-center justify-center py-20 border-2 border-dashed border-slate-300 rounded-xl bg-white hover:border-blue-400 cursor-pointer" onClick={() => fileInputRef.current.click()}>
                                     <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf" className="hidden" />
                                     <div className="text-blue-500 mb-4"><IconUpload className="w-12 h-12" /></div>
-                                    <p className="text-xl font-bold text-slate-700">上傳 PDF 檔案</p>
+                                    <p className="text-xl font-bold text-slate-700">載入 PDF 檔案</p>
                                     <p className="text-sm text-slate-400 mt-2">支援 A4/A5 來源，本地運算</p>
                                 </div>
                             ) : (

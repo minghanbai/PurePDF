@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         'pdf_to_jpg.html': 'pdf_to_jpg.html',
         'jpg_to_pdf.html': 'jpg_to_pdf.html',
         'pdf_booklet.html': 'pdf_booklet.html',
+        'pdf_redact.html': 'pdf_redact.html', // 新增
         'about.html': 'about.html'
     };
 

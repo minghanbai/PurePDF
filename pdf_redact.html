@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PDF 隱私遮蔽工具 - PurePDF</title>
+    
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#3b82f6', secondary: '#64748b' },
+                    fontFamily: { sans: ['Noto Sans TC', 'sans-serif'] }
+                }
+            }
+        };
+    </script>
+    
+    <!-- PDF Libraries -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/pdfjs-dist@2.16.105/web/pdf_viewer.css">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 引入共用佈局腳本 -->
+    <script src="layout.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
+        
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #3b82f6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .redaction-box {
+            position: absolute; background-color: #000; z-index: 30; cursor: pointer; opacity: 0.7;
+            transition: opacity 0.2s, background-color 0.2s;
+        }
+        .redaction-box:hover { opacity: 0.9; border: 1px solid #ef4444; }
+        .redaction-box.selected { border: 2px solid #ef4444; opacity: 0.9; }
+
+        .textLayer { opacity: 1; mix-blend-mode: multiply; }
+        .textLayer span { color: transparent; cursor: text; }
+        ::selection { background: rgba(251, 191, 36, 0.4); }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-800">
+
+    <!-- Header will be injected here by layout.js -->
+    <div id="header-placeholder"></div>
+
+    <!-- Main Content (React Root) -->
+    <main class="flex-grow p-4 md:p-8 flex flex-col items-center">
+        <div id="root" class="w-full max-w-[85rem]"></div>
+    </main>
+
+    <!-- Footer will be injected here by layout.js -->
+    <div id="footer-placeholder"></div>
+
+    <script type="text/babel">
+        const { useState, useRef, useEffect, useCallback } = React;
+        const { PDFDocument, rgb, PDFName, PDFNumber, PDFString, PDFHexString, PDFArray, PDFOperator } = PDFLib;
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@2.16.105/build/pdf.worker.min.js';
+
+        // Icons
+        const IconUpload = () => <i className="fa-solid fa-cloud-arrow-up text-4xl"></i>;
+        const IconShield = () => <i className="fa-solid fa-shield-halved"></i>;
+        const IconDownload = () => <i className="fa-solid fa-download"></i>;
+        const IconCheck = () => <i className="fa-solid fa-check"></i>;
+        const IconAlert = () => <i className="fa-solid fa-triangle-exclamation"></i>;
+        const IconPdf = () => <i className="fa-regular fa-file-pdf"></i>;
+        const IconEdit = () => <i className="fa-solid fa-pen-to-square"></i>;
+        const IconEraser = () => <i className="fa-solid fa-eraser"></i>;
+
+        const isTextShowOp = (op) => ['Tj', 'TJ', "'", '"'].includes(op.operator);
+        const cleanStr = (str) => str.replace(/[\s\r\n\t\u0000-\u001F]+/g, '').trim();
+
+        function App() {
+            const [file, setFile] = useState(null);
+            const [pdfDoc, setPdfDoc] = useState(null); 
+            const [pageCount, setPageCount] = useState(0);
+            const [rects, setRects] = useState({}); 
+            const [viewMode, setViewMode] = useState('upload'); // 'upload', 'grid', 'editor'
+            const [editingPage, setEditingPage] = useState(null); 
+            const [isProcessing, setIsProcessing] = useState(false);
+            const [processStatus, setProcessStatus] = useState('');
+            const [toolMode, setToolMode] = useState('select'); 
+            
+            // Settings
+            const [outputMode, setOutputMode] = useState('flatten'); 
+            const [dpi, setDpi] = useState(150);
+
+            const fileInputRef = useRef(null);
+
+            const handleFileChange = async (e) => {
+                const selectedFile = e.target.files[0];
+                if (!selectedFile) return;
+                if (selectedFile.type !== 'application/pdf') { alert('請載入 PDF 檔案'); return; }
+                
+                setFile(selectedFile);
+                setIsProcessing(true);
+                setProcessStatus('正在解析 PDF...');
+                setRects({});
+                
+                try {
+                    const arrayBuffer = await selectedFile.arrayBuffer();
+                    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                    const doc = await loadingTask.promise;
+                    setPdfDoc(doc);
+                    setPageCount(doc.numPages);
+                    setViewMode('grid');
+                } catch (err) {
+                    console.error(err);
+                    alert('無法讀取 PDF，請確認檔案未加密');
+                } finally {
+                    setIsProcessing(false);
+                }
+            };
+
+            const addRects = (pIdx, newRects) => {
+                setRects(prev => {
+                    const existing = prev[pIdx] || [];
+                    const rectsWithId = newRects.map(r => ({ ...r, id: Date.now() + Math.random() }));
+                    return { ...prev, [pIdx]: [...existing, ...rectsWithId] };
+                });
+            };
+
+            const removeRect = (pIdx, rectId) => {
+                setRects(prev => {
+                    const list = prev[pIdx] || [];
+                    return { ...prev, [pIdx]: list.filter(r => r.id !== rectId) };
+                });
+            };
+
+            const handleDownload = async () => {
+                if (!file) return;
+                setIsProcessing(true);
+                setProcessStatus(outputMode === 'vector' ? '正在嘗試向量遮蔽...' : `正在進行安全轉圖 (${dpi} DPI)...`);
+                
+                await new Promise(r => setTimeout(r, 100));
+
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdfDocLib = await PDFDocument.load(arrayBuffer);
+                    const pages = pdfDocLib.getPages();
+
+                    if (outputMode === 'vector') {
+                        // =========================================================
+                        // VECTOR REDACTION (EXPERIMENTAL)
+                        // =========================================================
+                        for (let i = 0; i < pages.length; i++) {
+                            const pageRects = rects[i];
+                            const pageLib = pages[i];
+                            const { width, height } = pageLib.getSize();
+
+                            // 1. Draw Visual Black Boxes (Always On Top)
+                            if (pageRects && pageRects.length > 0) {
+                                pageRects.forEach(r => {
+                                    pageLib.drawRectangle({
+                                        x: r.x * width,
+                                        y: height - (r.y * height) - (r.h * height),
+                                        width: r.w * width,
+                                        height: r.h * height,
+                                        color: rgb(0, 0, 0),
+                                    });
+                                });
+                            } else {
+                                continue;
+                            }
+                            
+                            // 嘗試刪除文字內容 (Visual Map Construction + Stream Editing)
+                            try {
+                                const pageJS = await pdfDoc.getPage(i + 1);
+                                const textContent = await pageJS.getTextContent();
+                                
+                                const visualChars = [];
+                                let fullVisualText = "";
+
+                                textContent.items.forEach(item => {
+                                    for (let c = 0; c < item.str.length; c++) {
+                                        const char = item.str[c];
+                                        visualChars.push({
+                                            char: char,
+                                            index: visualChars.length,
+                                            hasContent: /\S/.test(char)
+                                        });
+                                        fullVisualText += char;
+                                    }
+                                });
+
+                                const indicesToDelete = new Set();
+                                const gapInsertions = new Map();
+                                let currentFontSize = 12;
+
+                                pageRects.forEach(r => {
+                                    if (!r.text) return;
+                                    const target = cleanStr(r.text);
+                                    if (!target) return;
+
+                                    let searchPos = 0;
+                                    const cleanVisualText = fullVisualText.replace(/[\s\r\n\t\u0000-\u001F]+/g, '');
+                                    const cleanToVisualMap = [];
+                                    for(let v=0; v<visualChars.length; v++) {
+                                        if (visualChars[v].hasContent) cleanToVisualMap.push(v);
+                                    }
+
+                                    while (true) {
+                                        const matchIdxClean = cleanVisualText.indexOf(target, searchPos);
+                                        if (matchIdxClean === -1) break;
+
+                                        const startVisual = cleanToVisualMap[matchIdxClean];
+                                        const endVisual = cleanToVisualMap[matchIdxClean + target.length - 1];
+
+                                        for(let k = startVisual; k <= endVisual; k++) indicesToDelete.add(k);
+
+                                        const visualWidthPoints = r.w * width;
+                                        const gapUnits = -1 * (visualWidthPoints * 1000 / 12); 
+                                        gapInsertions.set(startVisual, gapUnits);
+                                        
+                                        searchPos = matchIdxClean + target.length;
+                                    }
+                                });
+
+                                const operators = pageLib.getOperators();
+                                const newOperators = [];
+                                let visualCursor = 0;
+
+                                for (let opIdx = 0; opIdx < operators.length; opIdx++) {
+                                    const op = operators[opIdx];
+                                    if (op.operator === 'Tf') {
+                                        const sizeArg = op.args[1];
+                                        if (sizeArg instanceof PDFNumber) currentFontSize = sizeArg.value();
+                                    }
+
+                                    if (isTextShowOp(op)) {
+                                        const newArray = PDFArray.withContext(pdfDocLib.context);
+                                        let hasChanges = false;
+                                        let opConsumedVisuals = false;
+
+                                        const processRawString = (rawItem, buffer) => {
+                                            let rawStr = "";
+                                            let isHex = false;
+                                            if (rawItem instanceof PDFString) rawStr = rawItem.decodeText(); 
+                                            else if (rawItem instanceof PDFHexString) { rawStr = rawItem.asString(); isHex = true; }
+
+                                            let rawCursor = 0;
+                                            let tempBuffer = ""; 
+
+                                            while (visualCursor < visualChars.length && rawCursor < rawStr.length) {
+                                                const vChar = visualChars[visualCursor];
+                                                let step = 1;
+                                                if (isHex) {
+                                                    step = (rawStr.length >= 4 && vChar.char.charCodeAt(0) > 255) ? 4 : 2;
+                                                    if (rawCursor + step > rawStr.length) step = rawStr.length - rawCursor;
+                                                }
+
+                                                if (gapInsertions.has(visualCursor)) {
+                                                    if (tempBuffer.length > 0) {
+                                                        buffer.push(isHex ? PDFHexString.of(tempBuffer) : PDFString.of(tempBuffer));
+                                                        tempBuffer = "";
+                                                    }
+                                                    const gapVal = (gapInsertions.get(visualCursor) * 12 / currentFontSize);
+                                                    buffer.push(PDFNumber.of(gapVal));
+                                                }
+
+                                                if (indicesToDelete.has(visualCursor)) hasChanges = true;
+                                                else tempBuffer += rawStr.substring(rawCursor, rawCursor + step);
+
+                                                rawCursor += step;
+                                                visualCursor++;
+                                                opConsumedVisuals = true;
+                                            }
+                                            if (tempBuffer.length > 0) buffer.push(isHex ? PDFHexString.of(tempBuffer) : PDFString.of(tempBuffer));
+                                        };
+
+                                        if (op.operator === 'TJ') {
+                                            const args = op.args[0]; 
+                                            for (let k = 0; k < args.size(); k++) {
+                                                const arg = args.get(k);
+                                                if (arg instanceof PDFNumber) newArray.push(arg);
+                                                else processRawString(arg, newArray);
+                                            }
+                                        } else {
+                                            const argIdx = (op.operator === '"') ? 2 : 0;
+                                            processRawString(op.args[argIdx], newArray);
+                                        }
+
+                                        if (opConsumedVisuals || hasChanges) newOperators.push(PDFOperator.of('TJ', [newArray]));
+                                        else newOperators.push(op);
+                                    } else {
+                                        newOperators.push(op);
+                                    }
+                                }
+                                pageLib.setOperators(newOperators);
+                            } catch (e) { console.warn("Vector redaction warning:", e); }
+                        }
+                        
+                        const finalBytes = await pdfDocLib.save();
+                        downloadBlob(finalBytes, `redacted_vector_${file.name}`);
+
+                    } else {
+                        // =========================================================
+                        // FLATTEN REDACTION (SAFE MODE)
+                        // =========================================================
+                        const flattenedDoc = await PDFDocument.create();
+                        const scale = dpi / 72;
+
+                        for (let i = 0; i < pageCount; i++) {
+                            setProcessStatus(`正在轉圖處理頁面 ${i+1} / ${pageCount} (DPI: ${dpi})...`);
+                            const page = await pdfDoc.getPage(i + 1);
+                            const viewport = page.getViewport({ scale: scale }); 
+                            
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            canvas.width = viewport.width; 
+                            canvas.height = viewport.height;
+                            
+                            await page.render({ canvasContext: ctx, viewport }).promise;
+                            
+                            if (rects[i]) {
+                                ctx.fillStyle = "#000";
+                                rects[i].forEach(r => {
+                                    ctx.fillRect(r.x * canvas.width, r.y * canvas.height, r.w * canvas.width, r.h * canvas.height);
+                                });
+                            }
+
+                            const imgData = canvas.toDataURL('image/jpeg', 0.85);
+                            const img = await flattenedDoc.embedJpg(imgData);
+                            const originalWidth = viewport.width / scale;
+                            const originalHeight = viewport.height / scale;
+
+                            const newPage = flattenedDoc.addPage([originalWidth, originalHeight]);
+                            newPage.drawImage(img, { x: 0, y: 0, width: originalWidth, height: originalHeight });
+                        }
+                        const finalBytes = await flattenedDoc.save();
+                        downloadBlob(finalBytes, `redacted_flatten_${dpi}dpi_${file.name}`);
+                    }
+                } catch (err) { 
+                    console.error(err); 
+                    alert('處理失敗: ' + err.message); 
+                } finally { 
+                    setIsProcessing(false); 
+                    setProcessStatus('');
+                }
+            };
+
+            const downloadBlob = (bytes, fn) => {
+                const blob = new Blob([bytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = fn; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            };
+
+            return (
+                <div className="w-full bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[600px]">
+                    
+                    {/* Toolbar Header (Unified Style) */}
+                    <div className="bg-white border-b border-gray-100 p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 w-full md:w-auto">
+                            {viewMode === 'editor' && (
+                                <button onClick={() => setViewMode('grid')} className="text-gray-500 hover:bg-gray-100 p-2 rounded-full transition">
+                                    <i className="fa-solid fa-arrow-left"></i>
+                                </button>
+                            )}
+                            <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <span className="text-gray-700 bg-gray-100 p-2 rounded-lg"><i className="fa-solid fa-user-secret"></i></span> 隱私遮蔽工具
+                            </h1>
+                        </div>
+                        
+                        {/* Right side controls */}
+                        {file && viewMode !== 'upload' && (
+                            <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                                
+                                <div className="flex flex-col md:flex-row items-center gap-3">
+                                    {/* Mode Selector */}
+                                    <div className="flex bg-slate-100 rounded-lg p-1">
+                                        <button 
+                                            onClick={() => setOutputMode('flatten')} 
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition flex items-center gap-2 ${outputMode === 'flatten' ? 'bg-white text-green-700 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'}`}
+                                        >
+                                            <i className="fa-solid fa-image"></i> 安全轉圖
+                                        </button>
+                                        <button 
+                                            onClick={() => setOutputMode('vector')} 
+                                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition flex items-center gap-2 ${outputMode === 'vector' ? 'bg-white text-orange-600 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700'}`}
+                                        >
+                                            <i className="fa-solid fa-pen-nib"></i> 向量遮蔽
+                                        </button>
+                                    </div>
+
+                                    {/* Contextual Options / Warnings */}
+                                    {outputMode === 'flatten' && (
+                                        <div className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                                            <span className="font-medium">清晰度:</span>
+                                            <label className="flex items-center gap-1 cursor-pointer hover:text-blue-600">
+                                                <input type="radio" name="dpi" checked={dpi === 150} onChange={() => setDpi(150)} className="text-blue-600 focus:ring-blue-500" /> 150 DPI
+                                            </label>
+                                            <label className="flex items-center gap-1 cursor-pointer hover:text-blue-600">
+                                                <input type="radio" name="dpi" checked={dpi === 300} onChange={() => setDpi(300)} className="text-blue-600 focus:ring-blue-500" /> 300 DPI
+                                            </label>
+                                        </div>
+                                    )}
+                                    
+                                    {outputMode === 'vector' && (
+                                        <div className="flex items-center gap-2 text-xs text-orange-700 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100" title="向量模式可能無法完全清除所有編碼層的原始文字">
+                                            <IconAlert />
+                                            <span className="hidden lg:inline">文字可能殘留</span>
+                                            <span className="lg:hidden">非絕對安全</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="h-6 w-px bg-gray-200 hidden md:block"></div>
+
+                                <button 
+                                    onClick={handleDownload} 
+                                    disabled={isProcessing}
+                                    className={`px-5 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 shadow-lg transform hover:scale-105 ${outputMode === 'flatten' ? 'bg-green-600 hover:bg-green-700 text-white shadow-green-200' : 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-200'}`}
+                                >
+                                    {isProcessing ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-download"></i>}
+                                    <span>下載 PDF</span>
+                                </button>
+                            </div>
+                        )}
+                        {!file && <div className="text-sm text-gray-500 hidden md:block">本地端運算・安全無痕</div>}
+                    </div>
+
+                    {/* Card Body */}
+                    <div className="p-4 md:p-8 flex-grow bg-slate-50/30">
+                        <div className="max-w-5xl mx-auto h-full flex flex-col">
+                            
+                            {/* Loading Overlay */}
+                            {isProcessing && (
+                                <div className="absolute inset-0 z-50 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl">
+                                    <div className="loader border-gray-800"></div>
+                                    <p className="mt-4 text-gray-700 font-medium animate-pulse">{processStatus || '處理中...'}</p>
+                                </div>
+                            )}
+
+                            {/* Upload View */}
+                            {viewMode === 'upload' && (
+                                <div className="h-full flex flex-col items-center justify-center py-10 md:py-20">
+                                    <div 
+                                        onClick={() => fileInputRef.current.click()} 
+                                        className="border-2 border-dashed border-slate-300 rounded-xl p-12 flex flex-col items-center justify-center text-slate-500 hover:bg-blue-50 hover:border-blue-400 transition-all cursor-pointer max-w-xl w-full group bg-white"
+                                    >
+                                        <input type="file" ref={fileInputRef} className="hidden" accept="application/pdf" onChange={handleFileChange} />
+                                        <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-blue-500 mb-6 group-hover:scale-110 transition-transform">
+                                            <IconUpload />
+                                        </div>
+                                        <h2 className="text-xl font-bold text-slate-700 mb-2">載入 PDF 文件</h2>
+                                        <p className="text-sm text-slate-400">純前端運算，資料不外流</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Grid View */}
+                            {viewMode === 'grid' && (
+                                <div className="flex-grow overflow-y-auto animate-fade-in pb-10">
+                                    
+                                    {/* File Info Bar */}
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm gap-4 mb-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-red-100 text-red-600 w-12 h-12 rounded-lg text-2xl flex items-center justify-center flex-shrink-0">
+                                                <IconPdf />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-slate-700 text-lg">{file.name}</h3>
+                                                <p className="text-sm text-slate-500">共 {pageCount} 頁 / {(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => { setFile(null); setPdfDoc(null); setRects({}); setViewMode('upload'); }} 
+                                            className="px-4 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-lg font-medium transition-colors w-full md:w-auto"
+                                        >
+                                            移除檔案
+                                        </button>
+                                    </div>
+
+                                    <div className="flex justify-between items-center mb-4 px-1">
+                                        <h3 className="text-lg font-semibold text-gray-700">選擇頁面進行編輯</h3>
+                                        <span className="text-sm text-gray-500">點擊縮圖進入編輯模式</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                                        {Array.from({ length: pageCount }).map((_, idx) => (
+                                            <Thumbnail 
+                                                key={idx} 
+                                                pageIndex={idx} 
+                                                pdfDoc={pdfDoc} 
+                                                rects={rects[idx] || []} 
+                                                onClick={() => { setEditingPage(idx); setViewMode('editor'); }} 
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Editor View */}
+                            {viewMode === 'editor' && (
+                                <div className="flex-grow flex flex-col relative bg-slate-200/50 rounded-xl border border-slate-200 overflow-hidden animate-fade-in h-[600px]">
+                                    <div className="absolute inset-0 overflow-auto flex justify-center py-10" id="editor-scroll-container">
+                                        <PageEditor 
+                                            pdfDoc={pdfDoc} 
+                                            pageIndex={editingPage} 
+                                            rects={rects[editingPage] || []} 
+                                            toolMode={toolMode} 
+                                            onAddRects={(r) => addRects(editingPage, r)} 
+                                            onRemoveRect={(id) => removeRect(editingPage, id)} 
+                                        />
+                                    </div>
+                                    
+                                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur shadow-2xl border border-white/50 p-2 rounded-full flex gap-2 z-40 scale-110">
+                                        <button 
+                                            onClick={() => setToolMode('select')} 
+                                            className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition ${toolMode === 'select' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500 hover:bg-gray-100'}`} 
+                                            title="選取文字模式"
+                                        >
+                                            <i className="fa-solid fa-i-cursor"></i>
+                                        </button>
+                                        <button 
+                                            onClick={() => setToolMode('scroll')} 
+                                            className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition ${toolMode === 'scroll' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500 hover:bg-gray-100'}`} 
+                                            title="瀏覽模式"
+                                        >
+                                            <i className="fa-solid fa-hand"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const Thumbnail = ({ pageIndex, pdfDoc, rects, onClick }) => {
+            const canvasRef = useRef(null);
+            useEffect(() => {
+                let mounted = true;
+                const render = async () => {
+                    if (!pdfDoc) return;
+                    try {
+                        const page = await pdfDoc.getPage(pageIndex + 1);
+                        if (!mounted) return;
+                        const viewport = page.getViewport({ scale: 0.25 });
+                        const canvas = canvasRef.current;
+                        if (canvas) {
+                            const ctx = canvas.getContext('2d'); canvas.height = viewport.height; canvas.width = viewport.width;
+                            await page.render({ canvasContext: ctx, viewport }).promise;
+                        }
+                    } catch(e) { console.warn(e); }
+                };
+                render(); return () => { mounted = false; };
+            }, [pdfDoc, pageIndex]);
+            return (
+                <div onClick={onClick} className="group relative bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200 hover:border-blue-400 aspect-[1/1.414]">
+                    <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                        <canvas ref={canvasRef} className="object-contain max-w-full max-h-full" />
+                        <div className="absolute inset-0 pointer-events-none">
+                            {rects.map((r) => (<div key={r.id} className="absolute bg-black" style={{ left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.w * 100}%`, height: `${r.h * 100}%` }} />))}
+                        </div>
+                    </div>
+                    <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition">第 {pageIndex + 1} 頁</div>
+                </div>
+            );
+        };
+
+        const PageEditor = ({ pdfDoc, pageIndex, rects, toolMode, onAddRects, onRemoveRect }) => {
+            const containerRef = useRef(null);
+            const textLayerRef = useRef(null);
+            const canvasRef = useRef(null);
+            const [selectionRect, setSelectionRect] = useState(null);
+            const [pendingRects, setPendingRects] = useState(null);
+
+            useEffect(() => {
+                let mounted = true;
+                const render = async () => {
+                    const page = await pdfDoc.getPage(pageIndex + 1);
+                    if (!mounted) return;
+                    const container = containerRef.current;
+                    const screenW = window.innerWidth;
+                    const viewportRaw = page.getViewport({ scale: 1.0 });
+                    const targetWidth = Math.min(screenW - 48, 1000); 
+                    const scale = targetWidth / viewportRaw.width;
+                    const viewport = page.getViewport({ scale });
+                    const canvas = canvasRef.current;
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height; canvas.width = viewport.width;
+                    container.style.width = `${viewport.width}px`; container.style.height = `${viewport.height}px`;
+                    await page.render({ canvasContext: context, viewport }).promise;
+                    if (textLayerRef.current) {
+                        textLayerRef.current.innerHTML = ''; textLayerRef.current.style.width = `${viewport.width}px`; textLayerRef.current.style.height = `${viewport.height}px`;
+                        pdfjsLib.renderTextLayer({ textContent: await page.getTextContent(), container: textLayerRef.current, viewport: viewport, textDivs: [] });
+                    }
+                };
+                render(); return () => { mounted = false; };
+            }, [pdfDoc, pageIndex]);
+
+            useEffect(() => {
+                const handleSelection = () => {
+                    if (toolMode !== 'select') return;
+                    const selection = window.getSelection();
+                    if (!selection.rangeCount || selection.isCollapsed) { setSelectionRect(null); return; }
+                    if (!textLayerRef.current || !textLayerRef.current.contains(selection.anchorNode)) return;
+                    const range = selection.getRangeAt(0);
+                    const selectedText = selection.toString().trim();
+                    if (!selectedText) return;
+                    const clientRects = range.getClientRects();
+                    const containerRect = containerRef.current.getBoundingClientRect();
+                    const newRects = [];
+                    let minX = Infinity, minY = Infinity;
+                    for (let i = 0; i < clientRects.length; i++) {
+                        const r = clientRects[i];
+                        const x = (r.left - containerRect.left) / containerRect.width;
+                        const y = (r.top - containerRect.top) / containerRect.height;
+                        const w = r.width / containerRect.width;
+                        const h = r.height / containerRect.height;
+                        if (w > 0 && h > 0) { newRects.push({ x, y, w, h, text: selectedText }); minX = Math.min(minX, r.left); minY = Math.min(minY, r.top); }
+                    }
+                    if (newRects.length > 0) { setPendingRects(newRects); setSelectionRect({ top: minY - 50, left: minX }); }
+                };
+                document.addEventListener('selectionchange', handleSelection); document.addEventListener('mouseup', handleSelection);
+                return () => { document.removeEventListener('selectionchange', handleSelection); document.removeEventListener('mouseup', handleSelection); };
+            }, [toolMode]);
+
+            const confirmRedaction = (e) => {
+                e.preventDefault(); e.stopPropagation();
+                if (pendingRects) { onAddRects(pendingRects); window.getSelection().removeAllRanges(); setSelectionRect(null); setPendingRects(null); }
+            };
+
+            return (
+                <div className="relative shadow-xl my-4 transition-all duration-300">
+                    <div ref={containerRef} className={`relative bg-white ${toolMode === 'select' ? 'cursor-text' : 'cursor-grab'}`}>
+                        <canvas ref={canvasRef} className="block pointer-events-none" />
+                        <div ref={textLayerRef} className="textLayer absolute inset-0" style={{ pointerEvents: toolMode === 'select' ? 'auto' : 'none' }} />
+                        {rects.map((r) => (
+                            <div key={r.id} className="redaction-box group" style={{ left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.w * 100}%`, height: `${r.h * 100}%` }} onClick={(e) => { e.stopPropagation(); if(confirm('要移除這個遮蔽區域嗎？')) onRemoveRect(r.id); }} title="點擊以移除">
+                                <div className="hidden group-hover:flex absolute -top-3 -right-3 w-6 h-6 bg-red-500 rounded-full items-center justify-center text-white text-xs font-bold shadow-sm">×</div>
+                            </div>
+                        ))}
+                    </div>
+                    {selectionRect && toolMode === 'select' && (
+                        <div className="fixed z-50 animate-bounce" style={{ top: selectionRect.top, left: selectionRect.left }}>
+                            <button className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-xl font-bold text-sm whitespace-nowrap flex items-center gap-2 transform hover:scale-105 transition" onMouseDown={(e) => e.preventDefault()} onClick={confirmRedaction}><i className="fa-solid fa-eraser"></i> 確認遮蔽</button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

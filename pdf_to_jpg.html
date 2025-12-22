@@ -95,7 +95,7 @@
             const handleFileChange = async (e) => {
                 const selectedFile = e.target.files[0];
                 if (!selectedFile) return;
-                if (selectedFile.type !== 'application/pdf') { setError('請上傳 PDF 格式的檔案'); return; }
+                if (selectedFile.type !== 'application/pdf') { setError('請載入 PDF 格式的檔案'); return; }
 
                 setFile(selectedFile); setError(null); setResult(null); setIsProcessing(true);
                 setProgress({ current: 0, total: 0, message: '分析檔案中...' });
