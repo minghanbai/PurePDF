@@ -54,10 +54,20 @@
         .textLayer span { color: transparent; cursor: text; }
         ::selection { background: rgba(251, 191, 36, 0.4); }
 
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Floating Action Button */
+        .fab-menu {
+            position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+            background: #1f2937; color: white;
+            border-radius: 9999px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            padding: 0.5rem;
+            display: flex; gap: 0.5rem;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+
+        /* Prevent body scroll when editing on mobile */
+        .no-scroll { overflow: hidden; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen text-slate-800">
@@ -88,6 +98,9 @@
         const IconPdf = () => <i className="fa-regular fa-file-pdf"></i>;
         const IconEdit = () => <i className="fa-solid fa-pen-to-square"></i>;
         const IconEraser = () => <i className="fa-solid fa-eraser"></i>;
+        const IconHand = () => <i className="fa-solid fa-hand"></i>;
+        const IconText = () => <i className="fa-solid fa-i-cursor"></i>;
+        const IconX = () => <i className="fa-solid fa-xmark"></i>;
 
         const isTextShowOp = (op) => ['Tj', 'TJ', "'", '"'].includes(op.operator);
         const cleanStr = (str) => str.replace(/[\s\r\n\t\u0000-\u001F]+/g, '').trim();
@@ -162,15 +175,13 @@
                     const pages = pdfDocLib.getPages();
 
                     if (outputMode === 'vector') {
-                        // =========================================================
-                        // VECTOR REDACTION (EXPERIMENTAL)
-                        // =========================================================
+                        // Vector Redaction Logic
                         for (let i = 0; i < pages.length; i++) {
                             const pageRects = rects[i];
                             const pageLib = pages[i];
                             const { width, height } = pageLib.getSize();
 
-                            // 1. Draw Visual Black Boxes (Always On Top)
+                            // 1. Draw Visual Black Boxes
                             if (pageRects && pageRects.length > 0) {
                                 pageRects.forEach(r => {
                                     pageLib.drawRectangle({
@@ -185,22 +196,17 @@
                                 continue;
                             }
                             
-                            // 嘗試刪除文字內容 (Visual Map Construction + Stream Editing)
+                            // 2. Stream Editing (Simplified)
                             try {
                                 const pageJS = await pdfDoc.getPage(i + 1);
                                 const textContent = await pageJS.getTextContent();
-                                
                                 const visualChars = [];
                                 let fullVisualText = "";
 
                                 textContent.items.forEach(item => {
                                     for (let c = 0; c < item.str.length; c++) {
                                         const char = item.str[c];
-                                        visualChars.push({
-                                            char: char,
-                                            index: visualChars.length,
-                                            hasContent: /\S/.test(char)
-                                        });
+                                        visualChars.push({ char: char, index: visualChars.length, hasContent: /\S/.test(char) });
                                         fullVisualText += char;
                                     }
                                 });
@@ -216,10 +222,7 @@
 
                                     let searchPos = 0;
                                     const cleanVisualText = fullVisualText.replace(/[\s\r\n\t\u0000-\u001F]+/g, '');
-                                    const cleanToVisualMap = [];
-                                    for(let v=0; v<visualChars.length; v++) {
-                                        if (visualChars[v].hasContent) cleanToVisualMap.push(v);
-                                    }
+                                    const cleanToVisualMap = visualChars.map((vc, idx) => vc.hasContent ? idx : -1).filter(idx => idx !== -1);
 
                                     while (true) {
                                         const matchIdxClean = cleanVisualText.indexOf(target, searchPos);
@@ -229,7 +232,6 @@
                                         const endVisual = cleanToVisualMap[matchIdxClean + target.length - 1];
 
                                         for(let k = startVisual; k <= endVisual; k++) indicesToDelete.add(k);
-
                                         const visualWidthPoints = r.w * width;
                                         const gapUnits = -1 * (visualWidthPoints * 1000 / 12); 
                                         gapInsertions.set(startVisual, gapUnits);
@@ -316,9 +318,7 @@
                         downloadBlob(finalBytes, `redacted_vector_${file.name}`);
 
                     } else {
-                        // =========================================================
-                        // FLATTEN REDACTION (SAFE MODE)
-                        // =========================================================
+                        // Flatten Mode
                         const flattenedDoc = await PDFDocument.create();
                         const scale = dpi / 72;
 
@@ -379,7 +379,7 @@
                                 </button>
                             )}
                             <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                <span className="text-gray-700 bg-gray-100 p-2 rounded-lg"><i className="fa-solid fa-user-secret"></i></span> 隱私遮蔽工具
+                                <span className="text-gray-700"><i className="fa-solid fa-user-secret"></i></span> 隱私遮蔽工具
                             </h1>
                         </div>
                         
@@ -421,7 +421,7 @@
                                         <div className="flex items-center gap-2 text-xs text-orange-700 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100" title="向量模式可能無法完全清除所有編碼層的原始文字">
                                             <IconAlert />
                                             <span className="hidden lg:inline">文字可能殘留</span>
-                                            <span className="lg:hidden">非絕對安全</span>
+                                            <span className="lg:hidden">文字可能殘留</span>
                                         </div>
                                     )}
                                 </div>
@@ -526,20 +526,21 @@
                                         />
                                     </div>
                                     
-                                    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur shadow-2xl border border-white/50 p-2 rounded-full flex gap-2 z-40 scale-110">
+                                    {/* Bottom Center Floating Toolbar */}
+                                    <div className="fab-menu">
                                         <button 
                                             onClick={() => setToolMode('select')} 
-                                            className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition ${toolMode === 'select' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500 hover:bg-gray-100'}`} 
-                                            title="選取文字模式"
+                                            className={`p-3 rounded-full transition flex items-center justify-center w-12 h-12 ${toolMode === 'select' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-gray-500 hover:bg-gray-100'}`} 
+                                            title="選取文字"
                                         >
-                                            <i className="fa-solid fa-i-cursor"></i>
+                                            <IconText />
                                         </button>
                                         <button 
                                             onClick={() => setToolMode('scroll')} 
-                                            className={`w-12 h-12 rounded-full flex items-center justify-center text-lg transition ${toolMode === 'scroll' ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500 hover:bg-gray-100'}`} 
-                                            title="瀏覽模式"
+                                            className={`p-3 rounded-full transition flex items-center justify-center w-12 h-12 ${toolMode === 'scroll' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-gray-500 hover:bg-gray-100'}`} 
+                                            title="滑動瀏覽"
                                         >
-                                            <i className="fa-solid fa-hand"></i>
+                                            <IconHand />
                                         </button>
                                     </div>
                                 </div>
@@ -586,7 +587,6 @@
             const containerRef = useRef(null);
             const textLayerRef = useRef(null);
             const canvasRef = useRef(null);
-            const [selectionRect, setSelectionRect] = useState(null);
             const [pendingRects, setPendingRects] = useState(null);
 
             useEffect(() => {
@@ -617,7 +617,7 @@
                 const handleSelection = () => {
                     if (toolMode !== 'select') return;
                     const selection = window.getSelection();
-                    if (!selection.rangeCount || selection.isCollapsed) { setSelectionRect(null); return; }
+                    if (!selection.rangeCount || selection.isCollapsed) { setPendingRects(null); return; }
                     if (!textLayerRef.current || !textLayerRef.current.contains(selection.anchorNode)) return;
                     const range = selection.getRangeAt(0);
                     const selectedText = selection.toString().trim();
@@ -625,16 +625,15 @@
                     const clientRects = range.getClientRects();
                     const containerRect = containerRef.current.getBoundingClientRect();
                     const newRects = [];
-                    let minX = Infinity, minY = Infinity;
                     for (let i = 0; i < clientRects.length; i++) {
                         const r = clientRects[i];
                         const x = (r.left - containerRect.left) / containerRect.width;
                         const y = (r.top - containerRect.top) / containerRect.height;
                         const w = r.width / containerRect.width;
                         const h = r.height / containerRect.height;
-                        if (w > 0 && h > 0) { newRects.push({ x, y, w, h, text: selectedText }); minX = Math.min(minX, r.left); minY = Math.min(minY, r.top); }
+                        if (w > 0 && h > 0) { newRects.push({ x, y, w, h, text: selectedText }); }
                     }
-                    if (newRects.length > 0) { setPendingRects(newRects); setSelectionRect({ top: minY - 50, left: minX }); }
+                    if (newRects.length > 0) { setPendingRects(newRects); }
                 };
                 document.addEventListener('selectionchange', handleSelection); document.addEventListener('mouseup', handleSelection);
                 return () => { document.removeEventListener('selectionchange', handleSelection); document.removeEventListener('mouseup', handleSelection); };
@@ -642,7 +641,13 @@
 
             const confirmRedaction = (e) => {
                 e.preventDefault(); e.stopPropagation();
-                if (pendingRects) { onAddRects(pendingRects); window.getSelection().removeAllRanges(); setSelectionRect(null); setPendingRects(null); }
+                if (pendingRects) { onAddRects(pendingRects); window.getSelection().removeAllRanges(); setPendingRects(null); }
+            };
+            
+            const cancelSelection = (e) => {
+                e.preventDefault(); e.stopPropagation();
+                window.getSelection().removeAllRanges();
+                setPendingRects(null);
             };
 
             return (
@@ -656,9 +661,15 @@
                             </div>
                         ))}
                     </div>
-                    {selectionRect && toolMode === 'select' && (
-                        <div className="fixed z-50 animate-bounce" style={{ top: selectionRect.top, left: selectionRect.left }}>
-                            <button className="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-xl font-bold text-sm whitespace-nowrap flex items-center gap-2 transform hover:scale-105 transition" onMouseDown={(e) => e.preventDefault()} onClick={confirmRedaction}><i className="fa-solid fa-eraser"></i> 確認遮蔽</button>
+                    {/* Fixed Bottom Action Buttons when selection is active */}
+                    {pendingRects && toolMode === 'select' && (
+                        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] flex gap-3 animate-fade-in w-max">
+                            <button className="bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl font-bold text-sm whitespace-nowrap flex items-center gap-2 border-2 border-white/20 transform hover:scale-105 transition" onMouseDown={(e) => e.preventDefault()} onClick={confirmRedaction}>
+                                <i className="fa-solid fa-eraser"></i> 確認遮蔽
+                            </button>
+                            <button className="bg-white text-gray-700 px-4 py-3 rounded-full shadow-xl font-bold text-sm border border-gray-200 hover:bg-gray-50 transition" onMouseDown={(e) => e.preventDefault()} onClick={cancelSelection}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
                         </div>
                     )}
                 </div>
